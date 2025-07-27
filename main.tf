@@ -1,3 +1,8 @@
+# MAAS provider configuration
+provider "maas" {
+  api_url = "http://192.168.1.100:5240/MAAS/"
+  api_key = "233ngalSSo2BmJoStJ:TALc45zXO0XL106xxq:o5kef17oOXnztbr5JzFEwENWbGmDTqW9"
+}
 # Explicit resources for each Vault VM, one per node
 resource "lxd_instance" "vault_node1" {
   name   = "vault-node1"

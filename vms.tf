@@ -1,10 +1,10 @@
 # First, we need to get the VM host data
 data "maas_vm_host" "lxd_hosts" {
   for_each = toset([
-    "t42s-lxd-cluster-node-1",
-    "t42s-lxd-cluster-node-2",
-    "t42s-lxd-cluster-node-3",
-    "t42s-lxd-cluster-node-4"
+    "t42s-node1",
+    "t42s-node2",
+    "t42s-node3",
+    "t42s-node4"
   ])
   name = each.key
 }
@@ -12,12 +12,26 @@ data "maas_vm_host" "lxd_hosts" {
 # Create VMs on MAAS-managed LXD hosts
 resource "maas_vm_host_machine" "k8s_vms" {
   for_each = {
-    "k8s-cp-1"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-lxd-cluster-node-1" }
-    "k8s-cp-2"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-lxd-cluster-node-2" }
-    "k8s-cp-3"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-lxd-cluster-node-3" }
-    "k8s-worker-1" = { cores = 8, memory = 16384, disk = 100, host = "t42s-lxd-cluster-node-2" }
-    "k8s-worker-2" = { cores = 8, memory = 16384, disk = 100, host = "t42s-lxd-cluster-node-4" }
-    "k8s-worker-3" = { cores = 8, memory = 16384, disk = 100, host = "t42s-lxd-cluster-node-4" }
+    "k8s-cp-1"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
+    "k8s-cp-2"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
+    "k8s-cp-3"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
+    "k8s-cp-4"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
+    "k8s-etcd-1"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
+    "k8s-etcd-2"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
+    "k8s-etcd-3"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
+    "k8s-etcd-4"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
+    "k8s-vault-1"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
+    "k8s-vault-2"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
+    "k8s-vault-3"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
+    "k8s-vault-4"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
+    "k8s-haproxy-1" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
+    "k8s-haproxy-2" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
+    "k8s-haproxy-3" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
+    "k8s-haproxy-4" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
+    "k8s-worker-1" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node2" }
+    "k8s-worker-2" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node4" }
+    "k8s-worker-3" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node4" }
+    "k8s-worker-4" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node4" }
   }
 
   hostname = each.key
