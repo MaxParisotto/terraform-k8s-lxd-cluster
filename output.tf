@@ -4,12 +4,12 @@ output "vault_units" {
 }
 
 output "kubernetes_vip" {
-  value       = "172.16.0.10"
+  value       = "172.16.0.101"
   description = "Kubernetes API VIP"
 }
 
 output "vault_vip" {
-  value       = "172.16.0.11"
+  value       = "172.16.0.102"
   description = "Vault VIP"
 }
 
