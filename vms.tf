@@ -24,6 +24,7 @@ locals {
     cores = 4
     memory = 8192
     longhorn_disk = false
+    tags = ["control-plane"]
   }]
   workers = [for i, node in local.nodes : {
     name = "worker-${i+1}"
@@ -32,6 +33,7 @@ locals {
     cores = 8
     memory = 16384
     longhorn_disk = true
+    tags = ["worker"]
   }]
   etcds = [for i, node in slice(local.nodes, 0, 3) : {
     name = "etcd-${i+1}"
@@ -40,6 +42,7 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
+    tags = ["etcd"]
   }]
   mysqls = [for i, node in slice(local.nodes, 0, 3) : {
     name = "mysql-${i+1}"
@@ -48,6 +51,7 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
+    tags = ["mysql"]
   }]
   vault = [{
     name = "vault-1"
@@ -56,6 +60,7 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
+    tags = ["vault"]
   }]
   haproxys = [for i, node in slice(local.nodes, 0, 2) : {
     name = "haproxy-${i+1}"
@@ -64,6 +69,7 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
+    tags = ["haproxy"]
   }]
   all_vms = concat(local.control_planes, local.workers, local.etcds, local.mysqls, local.vault, local.haproxys)
 }
@@ -75,6 +81,7 @@ resource "maas_vm_host_machine" "k8s_vms" {
   vm_host  = data.maas_vm_host.lxd_hosts[each.value.vm_host].id
   cores    = each.value.cores
   memory   = each.value.memory
+  # tags argument is not supported by the provider; tagging is handled separately if needed
 
   # Add a 50GB boot disk to all VMs
   storage_disks {
@@ -89,3 +96,12 @@ resource "maas_vm_host_machine" "k8s_vms" {
     }
   }
 }
+
+# Create MAAS tags for all roles
+resource "maas_tag" "roles" {
+  for_each = toset(["control-plane", "worker", "etcd", "mysql", "vault", "haproxy"])
+  name     = each.key
+}
+
+# Assign tags to machines after creation
+
