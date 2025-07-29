@@ -1,4 +1,7 @@
-# First, we need to get the VM host data
+
+
+
+# Get the VM host data for all 4 nodes
 data "maas_vm_host" "lxd_hosts" {
   for_each = toset([
     "t42s-node1",
@@ -9,78 +12,29 @@ data "maas_vm_host" "lxd_hosts" {
   name = each.key
 }
 
-# Create VMs on MAAS-managed LXD hosts
+# Provision 2 VMs per node: 1 control-plane, 1 worker
 resource "maas_vm_host_machine" "k8s_vms" {
-  for_each = {
-    "k8s-cp-1"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
-    "k8s-cp-2"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
-    "k8s-cp-3"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
-    "k8s-cp-4"     = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
-    "k8s-etcd-1"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
-    "k8s-etcd-2"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
-    "k8s-etcd-3"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
-    "k8s-etcd-4"   = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
-    "k8s-vault-1"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
-    "k8s-vault-2"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
-    "k8s-vault-3"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
-    "k8s-vault-4"  = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
-    "k8s-haproxy-1" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node1" }
-    "k8s-haproxy-2" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node2" }
-    "k8s-haproxy-3" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node3" }
-    "k8s-haproxy-4" = { cores = 4, memory = 8192, disk = 50, host = "t42s-node4" }
-    "k8s-worker-1" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node2" }
-    "k8s-worker-2" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node4" }
-    "k8s-worker-3" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node4" }
-    "k8s-worker-4" = { cores = 8, memory = 16384, disk = 100, host = "t42s-node4" }
-  }
-
-  hostname = each.key
-  vm_host  = data.maas_vm_host.lxd_hosts[each.value.host].id
-  cores    = each.value.cores
-  memory   = each.value.memory
-
-  network_interfaces {
-    name        = "eth0"
-    subnet_cidr = "172.16.0.0/12"
-  }
-
-  # Main OS/data disk
-  storage_disks {
-    size_gigabytes = each.value.disk
-  }
-}
-
-# Get the machines that were created
-data "maas_machine" "k8s_vms" {
-  for_each = maas_vm_host_machine.k8s_vms
+  for_each = merge(
+    { for node in ["t42s-node1", "t42s-node2", "t42s-node3", "t42s-node4"] :
+        "${node}-cp" => {
+          hostname = "${node}-cp"
+          vm_host  = node
+          cores    = 4
+          memory   = 8192
+        }
+    },
+    { for node in ["t42s-node1", "t42s-node2", "t42s-node3", "t42s-node4"] :
+        "${node}-worker" => {
+          hostname = "${node}-worker"
+          vm_host  = node
+          cores    = 8
+          memory   = 16384
+        }
+    }
+  )
 
   hostname = each.value.hostname
-
-  depends_on = [maas_vm_host_machine.k8s_vms]
-}
-
-# Deploy the VMs with Ubuntu
-resource "maas_instance" "k8s_vms" {
-  for_each = data.maas_machine.k8s_vms
-
-  allocate_params {
-    system_id = each.value.id
-  }
-
-  deploy_params {
-    distro_series = "noble"
-  }
-
-  depends_on = [data.maas_machine.k8s_vms]
-}
-
-# Add machines to Juju model
-resource "juju_machine" "from_maas" {
-  for_each = maas_instance.k8s_vms
-  model    = juju_model.k8s_bare_metal.name
-
-  base        = "ubuntu@24.04"
-  constraints = "tags=${each.key}"
-
-  depends_on = [maas_instance.k8s_vms]
+  vm_host  = data.maas_vm_host.lxd_hosts[each.value.vm_host].id
+  cores    = each.value.cores
+  memory   = each.value.memory
 }
