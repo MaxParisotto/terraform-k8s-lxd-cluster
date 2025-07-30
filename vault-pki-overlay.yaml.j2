@@ -1,0 +1,8 @@
+applications:
+  {{ overlay_applications | to_nice_yaml(indent=4) | indent(2) }}
+
+machines:
+  {{ (overlay_machines | default({})) | to_nice_yaml(indent=4) | indent(2) }}
+
+relations:
+  {{ overlay_relations | to_nice_yaml(indent=4) | indent(2) }}

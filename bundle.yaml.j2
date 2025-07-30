@@ -8,74 +8,11 @@ source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
 machines:
-  0:
+{% for sysid in juju_machines_ordered %}  {{ loop.index0 }}:
     series: noble
     constraints: cores=2 mem=8G root-disk=16G
-    id: s6pbsf
-  1:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: dwhkra
-  2:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: hnb34f
-  3:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: c7fcmk
-  4:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: kaqwmf
-  5:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: rpmbks
-  6:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: kcbbt6
-  7:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: xbxskx
-  8:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: pasmbb
-  9:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: ermphs
-  10:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: yhccr4
-  11:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: tg7brh
-  12:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: knbcdm
-  13:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: rb3apw
-  14:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: a76hn3
-  15:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: cbagmc
-  16:
-    series: noble
-    constraints: cores=2 mem=8G root-disk=16G
-    id: 7dq7yp
+    id: {{ sysid }}
+{% endfor %}
 applications:
   calico:
     annotations:

@@ -28,7 +28,31 @@
       haproxy-1: ["haproxy"]
       haproxy-2: ["haproxy"]
 
+
+
+    # List of hostnames in the desired Juju machine order
+    juju_hostnames:
+      - cp-1
+      - cp-2
+      - cp-3
+      - cp-4
+      - worker-1
+      - worker-2
+      - worker-3
+      - worker-4
+      - etcd-1
+      - etcd-2
+      - etcd-3
+      - mysql-1
+      - mysql-2
+      - mysql-3
+      - vault-1
+      - haproxy-1
+      - haproxy-2
+
   tasks:
+
+    # --- MAAS info and tagging logic ---
 
     - block:
         - name: Generate OAuth components (machines)
@@ -157,3 +181,99 @@
         msg: "{{ item }}"
       loop: "{{ tag_results.results }}"
       when: tag_results is defined
+
+    # --- Render bundle.yaml from Jinja2 template with dynamic machines section ---
+    - name: Build ordered list of MAAS system_ids for Juju hostnames
+      set_fact:
+        juju_machines_ordered: "{{ juju_hostnames | map('extract', host_to_system_id_map) | list }}"
+      vars:
+        host_to_system_id_map: >-
+          {{ dict(machines_to_tag | map(attribute='hostname') | zip(machines_to_tag | map(attribute='system_id'))) }}
+      when: machines_to_tag is defined
+
+    - name: Render bundle.yaml from template with correct MAAS system IDs
+      ansible.builtin.template:
+        src: bundle.yaml.j2
+        dest: ./bundle.yaml
+      vars:
+        juju_machines_ordered: "{{ juju_machines_ordered }}"
+      when: juju_machines_ordered is defined
+
+    # --- Render vault-pki-overlay.yaml from Jinja2 template with dynamic machines section ---
+
+
+    - name: Set vault and vault-mysql-router machine numbers and system IDs
+      set_fact:
+        vault_machine_number: 15
+        vault_mysql_router_machine_number: 16
+        vault_system_id: "{{ host_to_system_id_map['vault-1'] }}"
+        vault_mysql_router_system_id: "{{ host_to_system_id_map['haproxy-2'] }}"
+      vars:
+        host_to_system_id_map: >-
+          {{ dict(machines_to_tag | map(attribute='hostname') | zip(machines_to_tag | map(attribute='system_id'))) }}
+      when: machines_to_tag is defined
+
+    - name: Set overlay_machines for overlay rendering
+      set_fact:
+        overlay_machines: >-
+          {{ {
+            vault_machine_number: {
+              'series': 'noble',
+              'constraints': 'cores=2 mem=8G root-disk=16G',
+              'id': vault_system_id
+            },
+            vault_mysql_router_machine_number: {
+              'series': 'noble',
+              'constraints': 'cores=2 mem=8G root-disk=16G',
+              'id': vault_mysql_router_system_id
+            }
+          } }}
+      when: vault_machine_number is defined and vault_system_id is defined
+
+    - name: Set overlay applications and relations for overlay rendering
+      set_fact:
+        overlay_applications:
+          easyrsa: {}
+          mysql-innodb-cluster:
+            channel: latest/edge
+            charm: mysql-innodb-cluster
+            constraints: cores=2 mem=8G root-disk=64G
+            num_units: 3
+            options:
+              enable-binlogs: true
+              innodb-buffer-pool-size: 256M
+              max-connections: 2000
+              wait-timeout: 3600
+          vault:
+            channel: 1.7/stable
+            charm: vault
+            num_units: 1
+            options:
+              auto-generate-root-ca-cert: true
+          vault-mysql-router:
+            channel: latest/edge
+            charm: mysql-router
+        overlay_relations:
+          - [etcd:certificates, vault:certificates]
+          - [kubeapi-load-balancer:certificates, vault:certificates]
+          - [kubernetes-control-plane:certificates, vault:certificates]
+          - [kubernetes-worker:certificates, vault:certificates]
+          - [mysql-innodb-cluster:db-router, vault-mysql-router:db-router]
+          - [vault-mysql-router:shared-db, vault:shared-db]
+      when: vault_machine_number is defined and vault_system_id is defined
+
+    - name: Render vault-pki-overlay.yaml from template with correct MAAS system IDs
+      ansible.builtin.template:
+        src: vault-pki-overlay.yaml.j2
+        dest: ./vault-pki-overlay.yaml
+      vars:
+        vault_machine_number: "{{ vault_machine_number }}"
+        vault_mysql_router_machine_number: "{{ vault_mysql_router_machine_number }}"
+        vault_system_id: "{{ vault_system_id }}"
+        vault_mysql_router_system_id: "{{ vault_mysql_router_system_id }}"
+        overlay_applications: "{{ overlay_applications }}"
+        overlay_relations: "{{ overlay_relations }}"
+        overlay_machines: "{{ overlay_machines }}"
+      when: vault_machine_number is defined and vault_system_id is defined
+
+
