@@ -18,72 +18,70 @@ data "maas_vm_host" "lxd_hosts" {
 }
 
 
-# Provision all required VMs with vault-pki-overlay.yaml mapping
+# Provision all required VMs aligned with actual Juju deployment
 locals {
   nodes = ["t42s-node1", "t42s-node2", "t42s-node3", "t42s-node4"]
   
-  # Bundle.yaml + vault-pki-overlay.yaml mapping
-  # Each role has distinct cores+memory+disk for mutual exclusion
-  
-  # Machine 0: easyrsa (unique: 1 core, 4GB RAM, 16GB disk)
-  easyrsa = [{
-    name = "easyrsa-0"
-    hostname = "easyrsa-0"
-    vm_host = local.nodes[0]
-    cores = 1
-    memory = 4096
-    longhorn_disk = false
-    boot_disk_size = 16
-    bundle_machine = "machine-0"
-  }]
-  
-  # Machines 1-3: etcd (unique: 2 cores, 8GB RAM, 20GB disk)
-  etcds = [
+  # Aligned with actual Juju deployment from status
+  # Machine 0-2: MySQL for vault-pki-overlay (unique: 2 cores, 8GB RAM, 64GB disk)
+  mysql_cluster = [
     {
-      name = "etcd-1"
-      hostname = "etcd-1"
+      name = "mysql-1"
+      hostname = "mysql-1"
       vm_host = local.nodes[0]
       cores = 2
       memory = 8192
       longhorn_disk = false
-      boot_disk_size = 20
-      bundle_machine = "machine-1"
+      boot_disk_size = 64
+      bundle_machine = "machine-17"
     },
     {
-      name = "etcd-2"
-      hostname = "etcd-2"
-      vm_host = local.nodes[1]
-      cores = 2
-      memory = 8192
-      longhorn_disk = false
-      boot_disk_size = 20
-      bundle_machine = "machine-2"
-    },
-    {
-      name = "etcd-3"
-      hostname = "etcd-3"
+      name = "mysql-2"
+      hostname = "mysql-2"
       vm_host = local.nodes[2]
       cores = 2
       memory = 8192
       longhorn_disk = false
-      boot_disk_size = 20
-      bundle_machine = "machine-3"
+      boot_disk_size = 64
+      bundle_machine = "machine-18"
+    },
+    {
+      name = "mysql-3"
+      hostname = "mysql-3"
+      vm_host = local.nodes[1]
+      cores = 2
+      memory = 8192
+      longhorn_disk = false
+      boot_disk_size = 64
+      bundle_machine = "machine-19"
     }
   ]
   
-  # Machine 4: load balancer (unique: 4 cores, 8GB RAM, 16GB disk)
-  load_balancers = [{
-    name = "lb-1"
-    hostname = "lb-1"
+  # Machine 3: Vault for vault-pki-overlay (unique: 6 cores, 16GB RAM, 32GB disk)
+  vault = [{
+    name = "vault-1"
+    hostname = "vault-1"
     vm_host = local.nodes[3]
-    cores = 4
-    memory = 8192
+    cores = 6
+    memory = 16384
+    longhorn_disk = false
+    boot_disk_size = 32
+    bundle_machine = "machine-20"
+  }]
+  
+  # Machine 4: easyrsa (unique: 1 core, 4GB RAM, 16GB disk)
+  easyrsa = [{
+    name = "easyrsa-0"
+    hostname = "easyrsa-0"
+    vm_host = local.nodes[3]
+    cores = 1
+    memory = 4096
     longhorn_disk = false
     boot_disk_size = 16
     bundle_machine = "machine-4"
   }]
   
-  # Machines 5-8: control plane (unique: 4 cores, 8GB RAM, 16GB disk)
+  # Machine 5-8: control plane (unique: 4 cores, 8GB RAM, 16GB disk)
   control_planes = [
     {
       name = "cp-1"
@@ -127,7 +125,55 @@ locals {
     }
   ]
   
-  # Machines 9-12: workers (unique: 8 cores, 16GB RAM, 64GB disk + 300GB Longhorn)
+  # Machine 9: etcd-2
+  etcd_2 = [{
+    name = "etcd-2"
+    hostname = "etcd-2"
+    vm_host = local.nodes[1]
+    cores = 2
+    memory = 8192
+    longhorn_disk = false
+    boot_disk_size = 20
+    bundle_machine = "machine-10"
+  }]
+  
+  # Machine 10: etcd-1
+  etcd_1 = [{
+    name = "etcd-1"
+    hostname = "etcd-1"
+    vm_host = local.nodes[2]
+    cores = 2
+    memory = 8192
+    longhorn_disk = false
+    boot_disk_size = 20
+    bundle_machine = "machine-9"
+  }]
+  
+  # Machine 11: etcd-3
+  etcd_3 = [{
+    name = "etcd-3"
+    hostname = "etcd-3"
+    vm_host = local.nodes[0]
+    cores = 2
+    memory = 8192
+    longhorn_disk = false
+    boot_disk_size = 20
+    bundle_machine = "machine-11"
+  }]
+  
+  # Machine 12: load balancer
+  load_balancer = [{
+    name = "lb-1"
+    hostname = "lb-1"
+    vm_host = local.nodes[3]
+    cores = 4
+    memory = 8192
+    longhorn_disk = false
+    boot_disk_size = 16
+    bundle_machine = "machine-12"
+  }]
+  
+  # Machine 13-16: workers (unique: 8 cores, 16GB RAM, 64GB disk + 300GB Longhorn)
   workers = [
     {
       name = "worker-1"
@@ -137,7 +183,7 @@ locals {
       memory = 16384
       longhorn_disk = true
       boot_disk_size = 64
-      bundle_machine = "machine-9"
+      bundle_machine = "machine-13"
     },
     {
       name = "worker-2"
@@ -147,7 +193,7 @@ locals {
       memory = 16384
       longhorn_disk = true
       boot_disk_size = 64
-      bundle_machine = "machine-10"
+      bundle_machine = "machine-14"
     },
     {
       name = "worker-3"
@@ -157,7 +203,7 @@ locals {
       memory = 16384
       longhorn_disk = true
       boot_disk_size = 64
-      bundle_machine = "machine-11"
+      bundle_machine = "machine-15"
     },
     {
       name = "worker-4"
@@ -167,70 +213,24 @@ locals {
       memory = 16384
       longhorn_disk = true
       boot_disk_size = 64
-      bundle_machine = "machine-12"
+      bundle_machine = "machine-16"
     }
   ]
   
-  # Machines 12-14: MySQL for vault-pki-overlay (unique: 2 cores, 8GB RAM, 64GB disk)
-  mysql_cluster = [
-    {
-      name = "mysql-1"
-      hostname = "mysql-1"
-      vm_host = local.nodes[0]
-      cores = 2
-      memory = 8192
-      longhorn_disk = false
-      boot_disk_size = 64
-      bundle_machine = "machine-12"
-    },
-    {
-      name = "mysql-2"
-      hostname = "mysql-2"
-      vm_host = local.nodes[1]
-      cores = 2
-      memory = 8192
-      longhorn_disk = false
-      boot_disk_size = 64
-      bundle_machine = "machine-13"
-    },
-    {
-      name = "mysql-3"
-      hostname = "mysql-3"
-      vm_host = local.nodes[2]
-      cores = 2
-      memory = 8192
-      longhorn_disk = false
-      boot_disk_size = 64
-      bundle_machine = "machine-14"
-    }
-  ]
-  
-  # Machine 15: Vault for vault-pki-overlay (unique: 2 cores, 16GB RAM, 32GB disk)
-  vault = [{
-    name = "vault-1"
-    hostname = "vault-1"
-    vm_host = local.nodes[3]
-    cores = 6
-    memory = 16384
-    longhorn_disk = false
-    boot_disk_size = 32
-    bundle_machine = "machine-15"
-  }]
-  
-  # Machine 16: spare (unique: 2 cores, 8GB RAM, 16GB disk)
+  # Machine 7: spare (unique: 2 cores, 8GB RAM, 16GB disk)
   spare = [{
     name = "spare-1"
     hostname = "spare-1"
-    vm_host = local.nodes[0]
+    vm_host = local.nodes[2]
     cores = 2
     memory = 8192
     longhorn_disk = false
     boot_disk_size = 16
-    bundle_machine = "machine-16"
+    bundle_machine = "machine-21"
   }]
   
-  # Total: 17 VMs matching bundle.yaml + vault-pki-overlay machines 0-16
-  all_vms = concat(local.easyrsa, local.etcds, local.load_balancers, local.control_planes, local.workers, local.mysql_cluster, local.vault, local.spare)
+  # Total: 17 VMs with proper separation of roles
+  all_vms = concat(local.mysql_cluster, local.vault, local.easyrsa, local.control_planes, local.etcd_2, local.etcd_1, local.etcd_3, local.load_balancer, local.workers)
 }
 
 resource "maas_vm_host_machine" "k8s_vms" {
@@ -247,11 +247,35 @@ resource "maas_vm_host_machine" "k8s_vms" {
     size_gigabytes = each.value.boot_disk_size
   }
 
-  # Add a 300GB extra disk for Longhorn to workers only
+  # Add selective storage disks based on node type
   dynamic "storage_disks" {
     for_each = each.value.longhorn_disk == true ? [1] : []
     content {
       size_gigabytes = 300
+    }
+  }
+
+  # Add etcd data disk for etcd nodes (minimal size)
+  dynamic "storage_disks" {
+    for_each = can(regex("etcd-", each.value.name)) ? [1] : []
+    content {
+      size_gigabytes = 10
+    }
+  }
+
+  # Add MySQL data disk for MySQL nodes (minimal size)
+  dynamic "storage_disks" {
+    for_each = can(regex("mysql-", each.value.name)) ? [1] : []
+    content {
+      size_gigabytes = 20
+    }
+  }
+
+  # Add Vault data disk for Vault node (minimal size)
+  dynamic "storage_disks" {
+    for_each = each.value.name == "vault-1" ? [1] : []
+    content {
+      size_gigabytes = 20
     }
   }
 }
@@ -267,6 +291,7 @@ resource "maas_tag" "bundle_machines" {
   for_each = toset(["machine-0", "machine-1", "machine-2", "machine-3", "machine-4", 
                    "machine-5", "machine-6", "machine-7", "machine-8", "machine-9",
                    "machine-10", "machine-11", "machine-12", "machine-13", "machine-14",
-                   "machine-15", "machine-16"])
+                   "machine-15", "machine-16", "machine-17", "machine-18", "machine-19",
+                   "machine-20", "machine-21"])
   name     = each.key
 }

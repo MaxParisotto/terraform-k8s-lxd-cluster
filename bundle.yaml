@@ -9,73 +9,73 @@ website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
 machines:
   0:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: s6pbsf
+    id: kh33kw
   1:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: dwhkra
+    id: ay4tnk
   2:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: hnb34f
+    id: rh7sag
   3:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: c7fcmk
+    id: amctdr
   4:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: kaqwmf
+    id: k3fah3
   5:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: rpmbks
+    id: wxmtpg
   6:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: kcbbt6
+    id: 7bqmra
   7:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: xbxskx
+    id: rt38fq
   8:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: pasmbb
+    id: 7k3786
   9:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: ermphs
+    id: 7wddbn
   10:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: yhccr4
+    id: fhbywa
   11:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: tg7brh
+    id: carmtk
   12:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: knbcdm
+    id: 4fsf8t
   13:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: rb3apw
+    id: fw888r
   14:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: a76hn3
+    id: tbfqsw
   15:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: cbagmc
+    id: ytyx76
   16:
-    series: noble
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: 7dq7yp
+    id: kbd6nd
 applications:
   calico:
     annotations:
@@ -112,9 +112,9 @@ applications:
     options:
       channel: 3.4/stable
     to:
-      - 1
-      - 2
-      - 3
+      - 5
+      - 6
+      - 7
   kubeapi-load-balancer:
     annotations:
       gui-x: '450'
@@ -125,7 +125,7 @@ applications:
     expose: true
     num_units: 1
     to:
-      - 4
+      - 8
   kubernetes-control-plane:
     annotations:
       gui-x: '800'
@@ -137,17 +137,17 @@ applications:
     options:
       channel: 1.31/stable
     to:
-      - 5
-      - 6
-      - 7
-      - 8
+      - 1
+      - 2
+      - 3
+      - 4
   kubernetes-worker:
     annotations:
       gui-x: '90'
       gui-y: '850'
     channel: 1.31/stable
     charm: kubernetes-worker
-    constraints: cores=8 mem=8G root-disk=64G
+    constraints: cores=8 mem=16G root-disk=64G
     expose: true
     num_units: 4
     options:
@@ -157,6 +157,34 @@ applications:
       - 10
       - 11
       - 12
+  mysql-innodb-cluster:
+    annotations:
+      gui-x: '650'
+      gui-y: '420'
+    charm: mysql-innodb-cluster
+    constraints: cores=2 mem=8G root-disk=20G
+    num_units: 3
+    options:
+      enable-binlogs: true
+      innodb-buffer-pool-size: 256M
+      max-connections: 2000
+      wait-timeout: 3600
+    to:
+      - 13
+      - 14
+      - 15
+  vault:
+    annotations:
+      gui-x: '650'
+      gui-y: '200'
+    channel: 1.7/stable
+    charm: vault
+    constraints: cores=6 mem=16G root-disk=32G
+    num_units: 1
+    options:
+      auto-generate-root-ca-cert: true
+    to:
+      - 16
 relations:
 - - kubernetes-control-plane:loadbalancer-external
   - kubeapi-load-balancer:lb-consumers

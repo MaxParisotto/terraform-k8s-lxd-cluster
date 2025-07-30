@@ -8,10 +8,10 @@ source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
 machines:
-{% for sysid in juju_machines_ordered %}  {{ loop.index0 }}:
-    series: noble
+{% for sysid in juju_machines_ordered if sysid %}  {{ loop.index0 }}:
+    series: jammy
     constraints: cores=2 mem=8G root-disk=16G
-    id: {{ sysid }}
+    id: {{ sysid | default(hostname_to_system_id_map['vault-1']) }}
 {% endfor %}
 applications:
   calico:
@@ -37,7 +37,7 @@ applications:
     constraints: cores=1 mem=4G root-disk=16G
     num_units: 1
     to:
-      - 0
+      - {{ juju_machines_ordered.index('kh33kw') }}
   etcd:
     annotations:
       gui-x: '800'
@@ -49,9 +49,9 @@ applications:
     options:
       channel: 3.4/stable
     to:
-      - 1
-      - 2
-      - 3
+      - {{ juju_machines_ordered.index('wxmtpg') }}
+      - {{ juju_machines_ordered.index('7bqmra') }}
+      - {{ juju_machines_ordered.index('rt38fq') }}
   kubeapi-load-balancer:
     annotations:
       gui-x: '450'
@@ -62,7 +62,7 @@ applications:
     expose: true
     num_units: 1
     to:
-      - 4
+      - {{ juju_machines_ordered.index('7k3786') }}
   kubernetes-control-plane:
     annotations:
       gui-x: '800'
@@ -74,10 +74,10 @@ applications:
     options:
       channel: 1.31/stable
     to:
-      - 5
-      - 6
-      - 7
-      - 8
+      - {{ juju_machines_ordered.index('ay4tnk') }}
+      - {{ juju_machines_ordered.index('rh7sag') }}
+      - {{ juju_machines_ordered.index('amctdr') }}
+      - {{ juju_machines_ordered.index('k3fah3') }}
   kubernetes-worker:
     annotations:
       gui-x: '90'
@@ -90,10 +90,38 @@ applications:
     options:
       channel: 1.31/stable
     to:
-      - 9
-      - 10
-      - 11
-      - 12
+      - {{ juju_machines_ordered.index('7wddbn') }}
+      - {{ juju_machines_ordered.index('fhbywa') }}
+      - {{ juju_machines_ordered.index('carmtk') }}
+      - {{ juju_machines_ordered.index('4fsf8t') }}
+  mysql-innodb-cluster:
+    annotations:
+      gui-x: '650'
+      gui-y: '420'
+    charm: mysql-innodb-cluster
+    constraints: cores=2 mem=8G root-disk=20G
+    num_units: 3
+    options:
+      enable-binlogs: true
+      innodb-buffer-pool-size: 256M
+      max-connections: 2000
+      wait-timeout: 3600
+    to:
+      - {{ juju_machines_ordered.index('fw888r') }}
+      - {{ juju_machines_ordered.index('tbfqsw') }}
+      - {{ juju_machines_ordered.index('ytyx76') }}
+  vault:
+    annotations:
+      gui-x: '650'
+      gui-y: '200'
+    channel: 1.7/stable
+    charm: vault
+    constraints: cores=6 mem=16G root-disk=32G
+    num_units: 1
+    options:
+      auto-generate-root-ca-cert: true
+    to:
+      - {{ juju_machines_ordered.index('kbd6nd') }}
 relations:
 - - kubernetes-control-plane:loadbalancer-external
   - kubeapi-load-balancer:lb-consumers

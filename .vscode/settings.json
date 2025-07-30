@@ -1,0 +1,3 @@
+{
+    "ansible.python.interpreterPath": "/home/max/terraform-k8s-lxd-cluster/.venv/bin/python"
+}

@@ -38,12 +38,18 @@
           Accept: "application/json"
         method: GET
         return_content: yes
+        status_code: 200
       register: machines
+      failed_when: machines.status != 200
+
+    - name: Debug MAAS API response
+      debug:
+        msg: "MAAS API response: {{ machines }}"
 
     - name: Create machine list with tags
       set_fact:
         machines_with_tags: "{{ machines_with_tags | default([]) + [{'hostname': item.hostname, 'system_id': item.system_id, 'tags': host_tag_map[item.hostname] | default([])}] }}"
-      loop: "{{ machines.json }}"
+      loop: "{{ machines.content | from_json }}"
       when: item.hostname in host_tag_map
 
     - name: Get existing tags
@@ -54,11 +60,13 @@
           Accept: "application/json"
         method: GET
         return_content: yes
+        status_code: 200
       register: existing_tags_resp
+      failed_when: existing_tags_resp.status != 200
 
     - name: Create missing tags
       uri:
-        url: "{{ maas_url }}/api/2.0/tags/"
+        url: "{{ maas_url }}/api/2.2/tags/"
         headers:
           Authorization: 'OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ lookup("pipe", "uuidgen") | replace("-", "") }}",oauth_timestamp="{{ lookup("pipe", "date +%s") }}"'
           Accept: "application/json"
@@ -85,7 +93,47 @@
         body_format: form-urlencoded
         body:
           add: "{{ item.value | join(',') }}"
-        status_code: 200
+        status_code: [200, 302]
+        follow_redirects: all
       loop: "{{ tag_system_map | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
+
+    - name: Create a hostname to system_id map
+      set_fact:
+        hostname_to_system_id_map: "{{ hostname_to_system_id_map | default({}) | combine({item.hostname: item.system_id}) }}"
+      loop: "{{ machines_with_tags }}"
+
+    - name: Set juju_machines_ordered fact
+      set_fact:
+        juju_machines_ordered: "{{ [hostname_to_system_id_map['easyrsa-0'] | default(''), hostname_to_system_id_map['cp-1'] | default(''), hostname_to_system_id_map['cp-2'] | default(''), hostname_to_system_id_map['cp-3'] | default(''), hostname_to_system_id_map['cp-4'] | default(''), hostname_to_system_id_map['etcd-1'] | default(''), hostname_to_system_id_map['etcd-2'] | default(''), hostname_to_system_id_map['etcd-3'] | default(''), hostname_to_system_id_map['lb-1'] | default(''), hostname_to_system_id_map['worker-1'] | default(''), hostname_to_system_id_map['worker-2'] | default(''), hostname_to_system_id_map['worker-3'] | default(''), hostname_to_system_id_map['worker-4'] | default(''), hostname_to_system_id_map['mysql-1'] | default(''), hostname_to_system_id_map['mysql-2'] | default(''), hostname_to_system_id_map['mysql-3'] | default(''), hostname_to_system_id_map['vault-1'] | default(''), hostname_to_system_id_map['spare-1'] | default('')] }}"
+
+    - name: Set vault_machine_ids fact
+      set_fact:
+        vault_machine_ids:
+          mysql-1: "{{ hostname_to_system_id_map['mysql-1'] | default('') }}"
+          mysql-2: "{{ hostname_to_system_id_map['mysql-2'] | default('') }}"
+          mysql-3: "{{ hostname_to_system_id_map['mysql-3'] | default('') }}"
+          vault-1: "{{ hostname_to_system_id_map['vault-1'] | default('') }}"
+
+    - name: Debug juju_machines_ordered
+      debug:
+        var: juju_machines_ordered
+
+    - name: Debug hostname_to_system_id_map
+      debug:
+        var: hostname_to_system_id_map
+
+    - name: Generate bundle.yaml from template
+      template:
+        src: bundle.yaml.j2
+        dest: bundle.yaml
+      vars:
+        juju_machines_ordered: "{{ juju_machines_ordered }}"
+
+    - name: Generate vault-pki-overlay.yaml from template
+      template:
+        src: vault-pki-overlay.yaml.j2
+        dest: vault-pki-overlay.yaml
+      vars:
+        vault_machine_ids: "{{ vault_machine_ids }}"
