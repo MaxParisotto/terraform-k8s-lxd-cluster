@@ -86,10 +86,6 @@ applications:
     num_units: 1
     options:
       vxlan: Always
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-3']) }}
   containerd:
     annotations:
       gui-x: '475'
@@ -97,15 +93,6 @@ applications:
     channel: 1.31/stable
     charm: containerd
     num_units: 1
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-3']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-4']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-3']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-4']) }}
   easyrsa:
     annotations:
       gui-x: '90'

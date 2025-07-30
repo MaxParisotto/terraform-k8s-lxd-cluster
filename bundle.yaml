@@ -86,10 +86,6 @@ applications:
     num_units: 1
     options:
       vxlan: Always
-    to:
-      - 5
-      - 6
-      - 7
   containerd:
     annotations:
       gui-x: '475'
@@ -97,15 +93,6 @@ applications:
     channel: 1.31/stable
     charm: containerd
     num_units: 1
-    to:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 9
-      - 10
-      - 11
-      - 12
   easyrsa:
     annotations:
       gui-x: '90'
