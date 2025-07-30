@@ -1,5 +1,25 @@
+
 applications:
-  {{ overlay_applications | to_nice_yaml(indent=4) | indent(2) }}
+  easyrsa: {}
+  mysql-innodb-cluster:
+    channel: latest/edge
+    charm: mysql-innodb-cluster
+    constraints: cores=2 mem=8G root-disk=64G
+    num_units: 3
+    options:
+      enable-binlogs: true
+      innodb-buffer-pool-size: 256M
+      max-connections: 2000
+      wait-timeout: 3600
+    to: [{{ mysql_1_machine_number }}, {{ mysql_2_machine_number }}, {{ mysql_3_machine_number }}]
+  vault:
+    channel: 1.17/stable
+    charm: vault
+    num_units: 1
+    to: [{{ vault_machine_number }}]
+  vault-mysql-router:
+    channel: latest/edge
+    charm: mysql-router
 
 machines:
   {{ (overlay_machines | default({})) | to_nice_yaml(indent=4) | indent(2) }}
