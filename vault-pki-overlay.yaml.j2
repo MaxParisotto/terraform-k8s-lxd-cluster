@@ -3,14 +3,14 @@ applications:
   mysql-innodb-cluster:
     channel: 8.0/stable
     charm: mysql-innodb-cluster
-    constraints: cores=2 mem=8G root-disk=64G
+    constraints: cores=4 mem=8G root-disk=64G
     num_units: 3
     options:
       enable-binlogs: true
       innodb-buffer-pool-size: 256M
       max-connections: 2000
       wait-timeout: 3600
-    to: [13, 14, 15]
+    to: [{{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-1']) }}, {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-2']) }}, {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-3']) }}]
   vault:
     channel: 1.7/stable
     charm: vault
@@ -19,7 +19,7 @@ applications:
     options:
       # this makes Vault act as a self-signed root CA
       auto-generate-root-ca-cert: true
-    to: [16]
+    to: [{{ juju_machines_ordered.index(hostname_to_system_id_map['vault-1']) }}]
   vault-mysql-router:
     channel: 8.0/stable
     charm: mysql-router

@@ -8,11 +8,74 @@ source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
 machines:
-{% for sysid in juju_machines_ordered if sysid %}  {{ loop.index0 }}:
+  0:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: {{ sysid | default(hostname_to_system_id_map['vault-1']) }}
-{% endfor %}
+    constraints: cores=4 mem=4G root-disk=16G
+    id: {{ hostname_to_system_id_map['easyrsa-0'] }}
+  1:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: {{ hostname_to_system_id_map['cp-1'] }}
+  2:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: {{ hostname_to_system_id_map['cp-2'] }}
+  3:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: {{ hostname_to_system_id_map['cp-3'] }}
+  4:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: {{ hostname_to_system_id_map['cp-4'] }}
+  5:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=20G
+    id: {{ hostname_to_system_id_map['etcd-1'] }}
+  6:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=20G
+    id: {{ hostname_to_system_id_map['etcd-2'] }}
+  7:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=20G
+    id: {{ hostname_to_system_id_map['etcd-3'] }}
+  8:
+    series: jammy
+    constraints: cores=8 mem=8G root-disk=15G
+    id: {{ hostname_to_system_id_map['lb-1'] }}
+  9:
+    series: jammy
+    constraints: cores=16 mem=32G root-disk=64G
+    id: {{ hostname_to_system_id_map['worker-1'] }}
+  10:
+    series: jammy
+    constraints: cores=16 mem=32G root-disk=64G
+    id: {{ hostname_to_system_id_map['worker-2'] }}
+  11:
+    series: jammy
+    constraints: cores=16 mem=32G root-disk=64G
+    id: {{ hostname_to_system_id_map['worker-3'] }}
+  12:
+    series: jammy
+    constraints: cores=16 mem=32G root-disk=64G
+    id: {{ hostname_to_system_id_map['worker-4'] }}
+  13:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=64G
+    id: {{ hostname_to_system_id_map['mysql-1'] }}
+  14:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=64G
+    id: {{ hostname_to_system_id_map['mysql-2'] }}
+  15:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=64G
+    id: {{ hostname_to_system_id_map['mysql-3'] }}
+  16:
+    series: jammy
+    constraints: cores=6 mem=16G root-disk=32G
+    id: {{ hostname_to_system_id_map['vault-1'] }}
 applications:
   calico:
     annotations:
@@ -20,49 +83,64 @@ applications:
       gui-y: '605'
     channel: 1.31/stable
     charm: calico
+    num_units: 1
     options:
       vxlan: Always
+    to:
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-3']) }}
   containerd:
     annotations:
       gui-x: '475'
       gui-y: '800'
     channel: 1.31/stable
     charm: containerd
+    num_units: 1
+    to:
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-3']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-4']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-3']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-4']) }}
   easyrsa:
     annotations:
       gui-x: '90'
       gui-y: '420'
     channel: 1.31/stable
     charm: easyrsa
-    constraints: cores=1 mem=4G root-disk=16G
+    constraints: cores=4 mem=4G root-disk=16G
     num_units: 1
     to:
-      - {{ juju_machines_ordered.index('kh33kw') }}
+      - 0
   etcd:
     annotations:
       gui-x: '800'
       gui-y: '420'
     channel: 1.31/stable
     charm: etcd
-    constraints: cores=2 mem=8G root-disk=20G
+    constraints: cores=4 mem=8G root-disk=20G
     num_units: 3
     options:
       channel: 3.4/stable
     to:
-      - {{ juju_machines_ordered.index('wxmtpg') }}
-      - {{ juju_machines_ordered.index('7bqmra') }}
-      - {{ juju_machines_ordered.index('rt38fq') }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-3']) }}
   kubeapi-load-balancer:
     annotations:
       gui-x: '450'
       gui-y: '250'
     channel: 1.31/stable
     charm: kubeapi-load-balancer
-    constraints: cores=4 mem=8G root-disk=16G
+    constraints: cores=8 mem=8G root-disk=15G
     expose: true
     num_units: 1
     to:
-      - {{ juju_machines_ordered.index('7k3786') }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['lb-1']) }}
   kubernetes-control-plane:
     annotations:
       gui-x: '800'
@@ -74,32 +152,32 @@ applications:
     options:
       channel: 1.31/stable
     to:
-      - {{ juju_machines_ordered.index('ay4tnk') }}
-      - {{ juju_machines_ordered.index('rh7sag') }}
-      - {{ juju_machines_ordered.index('amctdr') }}
-      - {{ juju_machines_ordered.index('k3fah3') }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-3']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-4']) }}
   kubernetes-worker:
     annotations:
       gui-x: '90'
       gui-y: '850'
     channel: 1.31/stable
     charm: kubernetes-worker
-    constraints: cores=8 mem=16G root-disk=64G
+    constraints: cores=16 mem=32G root-disk=64G
     expose: true
     num_units: 4
     options:
       channel: 1.31/stable
     to:
-      - {{ juju_machines_ordered.index('7wddbn') }}
-      - {{ juju_machines_ordered.index('fhbywa') }}
-      - {{ juju_machines_ordered.index('carmtk') }}
-      - {{ juju_machines_ordered.index('4fsf8t') }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-3']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-4']) }}
   mysql-innodb-cluster:
     annotations:
       gui-x: '650'
       gui-y: '420'
     charm: mysql-innodb-cluster
-    constraints: cores=2 mem=8G root-disk=20G
+    constraints: cores=4 mem=8G root-disk=64G
     num_units: 3
     options:
       enable-binlogs: true
@@ -107,9 +185,9 @@ applications:
       max-connections: 2000
       wait-timeout: 3600
     to:
-      - {{ juju_machines_ordered.index('fw888r') }}
-      - {{ juju_machines_ordered.index('tbfqsw') }}
-      - {{ juju_machines_ordered.index('ytyx76') }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-1']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-2']) }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-3']) }}
   vault:
     annotations:
       gui-x: '650'
@@ -121,7 +199,7 @@ applications:
     options:
       auto-generate-root-ca-cert: true
     to:
-      - {{ juju_machines_ordered.index('kbd6nd') }}
+      - {{ juju_machines_ordered.index(hostname_to_system_id_map['vault-1']) }}
 relations:
 - - kubernetes-control-plane:loadbalancer-external
   - kubeapi-load-balancer:lb-consumers

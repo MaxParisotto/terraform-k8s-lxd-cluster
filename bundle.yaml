@@ -10,72 +10,72 @@ name: charmed-kubernetes
 machines:
   0:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: kh33kw
+    constraints: cores=4 mem=4G root-disk=16G
+    id: rrpdpy
   1:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: ay4tnk
+    constraints: cores=4 mem=8G root-disk=16G
+    id: ghckxq
   2:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: rh7sag
+    constraints: cores=4 mem=8G root-disk=16G
+    id: s87ckn
   3:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: amctdr
+    constraints: cores=4 mem=8G root-disk=16G
+    id: 6yhtqy
   4:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: k3fah3
+    constraints: cores=4 mem=8G root-disk=16G
+    id: rtb6pn
   5:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: wxmtpg
+    constraints: cores=4 mem=8G root-disk=20G
+    id: 7wg66q
   6:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: 7bqmra
+    constraints: cores=4 mem=8G root-disk=20G
+    id: sbtdw3
   7:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: rt38fq
+    constraints: cores=4 mem=8G root-disk=20G
+    id: kftbh4
   8:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: 7k3786
+    constraints: cores=8 mem=8G root-disk=15G
+    id: kqsane
   9:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: 7wddbn
+    constraints: cores=16 mem=32G root-disk=64G
+    id: 7rr77b
   10:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: fhbywa
+    constraints: cores=16 mem=32G root-disk=64G
+    id: dkhqk8
   11:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: carmtk
+    constraints: cores=16 mem=32G root-disk=64G
+    id: ta3y6n
   12:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: 4fsf8t
+    constraints: cores=16 mem=32G root-disk=64G
+    id: tptdhx
   13:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: fw888r
+    constraints: cores=4 mem=8G root-disk=64G
+    id: pcntfr
   14:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: tbfqsw
+    constraints: cores=4 mem=8G root-disk=64G
+    id: fchts7
   15:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: ytyx76
+    constraints: cores=4 mem=8G root-disk=64G
+    id: pmqfbw
   16:
     series: jammy
-    constraints: cores=2 mem=8G root-disk=16G
-    id: kbd6nd
+    constraints: cores=6 mem=16G root-disk=32G
+    id: qgrdxs
 applications:
   calico:
     annotations:
@@ -83,21 +83,36 @@ applications:
       gui-y: '605'
     channel: 1.31/stable
     charm: calico
+    num_units: 1
     options:
       vxlan: Always
+    to:
+      - 5
+      - 6
+      - 7
   containerd:
     annotations:
       gui-x: '475'
       gui-y: '800'
     channel: 1.31/stable
     charm: containerd
+    num_units: 1
+    to:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 9
+      - 10
+      - 11
+      - 12
   easyrsa:
     annotations:
       gui-x: '90'
       gui-y: '420'
     channel: 1.31/stable
     charm: easyrsa
-    constraints: cores=1 mem=4G root-disk=16G
+    constraints: cores=4 mem=4G root-disk=16G
     num_units: 1
     to:
       - 0
@@ -107,7 +122,7 @@ applications:
       gui-y: '420'
     channel: 1.31/stable
     charm: etcd
-    constraints: cores=2 mem=8G root-disk=20G
+    constraints: cores=4 mem=8G root-disk=20G
     num_units: 3
     options:
       channel: 3.4/stable
@@ -121,7 +136,7 @@ applications:
       gui-y: '250'
     channel: 1.31/stable
     charm: kubeapi-load-balancer
-    constraints: cores=4 mem=8G root-disk=16G
+    constraints: cores=8 mem=8G root-disk=15G
     expose: true
     num_units: 1
     to:
@@ -147,7 +162,7 @@ applications:
       gui-y: '850'
     channel: 1.31/stable
     charm: kubernetes-worker
-    constraints: cores=8 mem=16G root-disk=64G
+    constraints: cores=16 mem=32G root-disk=64G
     expose: true
     num_units: 4
     options:
@@ -162,7 +177,7 @@ applications:
       gui-x: '650'
       gui-y: '420'
     charm: mysql-innodb-cluster
-    constraints: cores=2 mem=8G root-disk=20G
+    constraints: cores=4 mem=8G root-disk=64G
     num_units: 3
     options:
       enable-binlogs: true

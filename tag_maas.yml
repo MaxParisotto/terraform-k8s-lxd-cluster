@@ -27,7 +27,6 @@
       vault-1: ["vault"]
       easyrsa-0: ["easyrsa"]
       lb-1: ["load-balancer"]
-      spare-1: ["spare"]
 
   tasks:
     - name: Get all MAAS machines
@@ -41,10 +40,6 @@
         status_code: 200
       register: machines
       failed_when: machines.status != 200
-
-    - name: Debug MAAS API response
-      debug:
-        msg: "MAAS API response: {{ machines }}"
 
     - name: Create machine list with tags
       set_fact:

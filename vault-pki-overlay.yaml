@@ -3,7 +3,7 @@ applications:
   mysql-innodb-cluster:
     channel: 8.0/stable
     charm: mysql-innodb-cluster
-    constraints: cores=2 mem=8G root-disk=64G
+    constraints: cores=4 mem=8G root-disk=64G
     num_units: 3
     options:
       enable-binlogs: true
