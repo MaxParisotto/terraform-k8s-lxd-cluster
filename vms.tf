@@ -42,32 +42,32 @@ locals {
     name = "etcd-${i+1}"
     hostname = "etcd-${i+1}"
     vm_host = node
-    cores = 2
-    memory = 4096
+    cores = 4
+    memory = 8192
     longhorn_disk = false
   }]
   mysqls = [for i, node in slice(local.nodes, 0, 3) : {
     name = "mysql-${i+1}"
     hostname = "mysql-${i+1}"
     vm_host = node
-    cores = 2
-    memory = 4096
+    cores = 4
+    memory = 8192
     longhorn_disk = false
   }]
   vault = [{
     name = "vault-1"
     hostname = "vault-1"
     vm_host = local.nodes[0]
-    cores = 2
-    memory = 4096
+    cores = 4
+    memory = 8192
     longhorn_disk = false
   }]
   haproxys = [for i, node in slice(local.nodes, 0, 2) : {
     name = "haproxy-${i+1}"
     hostname = "haproxy-${i+1}"
     vm_host = node
-    cores = 2
-    memory = 4096
+    cores = 4
+    memory = 8192
     longhorn_disk = false
   }]
   all_vms = concat(local.control_planes, local.workers, local.etcds, local.mysqls, local.vault, local.haproxys)
@@ -82,9 +82,9 @@ resource "maas_vm_host_machine" "k8s_vms" {
   memory   = each.value.memory
   # tags argument is not supported by the provider; tagging is handled separately if needed
 
-  # Add a 50GB boot disk to all VMs
+  # Add a 64GB boot disk to all VMs
   storage_disks {
-    size_gigabytes = 50
+    size_gigabytes = 64
   }
 
   # Add a 300GB extra disk for Longhorn to workers only
