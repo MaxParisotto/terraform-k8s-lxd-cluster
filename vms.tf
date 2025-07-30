@@ -29,7 +29,6 @@ locals {
     cores = 4
     memory = 8192
     longhorn_disk = false
-    tags = ["control-plane"]
   }]
   workers = [for i, node in local.nodes : {
     name = "worker-${i+1}"
@@ -38,7 +37,6 @@ locals {
     cores = 8
     memory = 16384
     longhorn_disk = true
-    tags = ["worker"]
   }]
   etcds = [for i, node in slice(local.nodes, 0, 3) : {
     name = "etcd-${i+1}"
@@ -47,7 +45,6 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
-    tags = ["etcd"]
   }]
   mysqls = [for i, node in slice(local.nodes, 0, 3) : {
     name = "mysql-${i+1}"
@@ -56,7 +53,6 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
-    tags = ["mysql"]
   }]
   vault = [{
     name = "vault-1"
@@ -65,7 +61,6 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
-    tags = ["vault"]
   }]
   haproxys = [for i, node in slice(local.nodes, 0, 2) : {
     name = "haproxy-${i+1}"
@@ -74,7 +69,6 @@ locals {
     cores = 2
     memory = 4096
     longhorn_disk = false
-    tags = ["haproxy"]
   }]
   all_vms = concat(local.control_planes, local.workers, local.etcds, local.mysqls, local.vault, local.haproxys)
 }

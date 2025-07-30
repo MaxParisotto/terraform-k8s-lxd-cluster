@@ -6,6 +6,9 @@
   vars:
     maas_api_key: "wZaVDgSiTL9Qi6xy1Y:iAQtxbsRC7CDEVWER4:LgzJQLZHDXPar9e6uhLGv7XjhrkDlBNf"
     maas_url: "http://172.16.0.100:5240/MAAS"
+    consumer_key: "{{ maas_api_key.split(':')[0] }}"
+    token_key: "{{ maas_api_key.split(':')[1] }}"
+    token_secret: "{{ maas_api_key.split(':')[2] }}"
     host_tag_map:
       cp-1: ["control-plane"]
       cp-2: ["control-plane"]
@@ -26,40 +29,131 @@
       haproxy-2: ["haproxy"]
 
   tasks:
-    - name: Get all MAAS machines
-      uri:
-        url: "{{ maas_url }}/api/2.0/machines/?apikey={{ maas_api_key }}"
-        headers:
-          Accept: "application/json"
-        method: GET
-        return_content: yes
-      register: machines
+
+    - block:
+        - name: Generate OAuth components (machines)
+          set_fact:
+            timestamp: "{{ lookup('pipe', 'date +%s') }}"
+            nonce: "{{ lookup('pipe', 'uuidgen') | replace('-', '') }}"
+
+        - name: Construct Authorization header (machines)
+          set_fact:
+            auth_header: >-
+              OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ nonce }}",oauth_timestamp="{{ timestamp }}"
+
+        - name: Get all MAAS machines
+          uri:
+            url: "{{ maas_url }}/api/2.0/machines/"
+            headers:
+              Authorization: "{{ auth_header }}"
+              Accept: "application/json"
+            method: GET
+            return_content: yes
+          register: machines
+      name: Get all MAAS machines (with fresh OAuth)
+
+    - name: Filter machines to tag
+      set_fact:
+        machines_to_tag: "{{ machines.json | selectattr('hostname', 'in', host_tag_map.keys() | list) | list }}"
+
+    - name: Add tags to machines_to_tag
+      set_fact:
+        machines_to_tag_with_tags: "{{ machines_to_tag_with_tags | default([]) + [item | combine({'tags': host_tag_map[item.hostname] | default([])})] }}"
+      loop: "{{ machines_to_tag }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Build machine/tag pairs
       set_fact:
-        machine_tag_pairs: >-
-          {{
-            machine_tag_pairs | default([]) +
-            [
-              {'system_id': item.0.system_id, 'hostname': item.0.hostname, 'tag': item.1}
-            ]
-          }}
-      with_subelements:
-        - "{{ machines.json.objects }}"
-        - tags
-      vars:
-        tags: "{{ host_tag_map.get(item.0.hostname, []) }}"
-      when: tags | length > 0
+        machine_tag_pairs: "{{ machine_tag_pairs | default([]) + [{'system_id': item.0.system_id, 'hostname': item.0.hostname, 'tag': item.1}] }}"
+      loop: "{{ query('subelements', machines_to_tag_with_tags, 'tags') }}"
 
-    - name: Tag each machine
+
+    - block:
+        - name: Generate OAuth components (get tags)
+          set_fact:
+            timestamp: "{{ lookup('pipe', 'date +%s') }}"
+            nonce: "{{ lookup('pipe', 'uuidgen') | replace('-', '') }}"
+
+        - name: Construct Authorization header (get tags)
+          set_fact:
+            auth_header: >-
+              OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ nonce }}",oauth_timestamp="{{ timestamp }}"
+
+        - name: Get existing tags
+          uri:
+            url: "{{ maas_url }}/api/2.0/tags/"
+            headers:
+              Authorization: "{{ auth_header }}"
+              Accept: "application/json"
+            method: GET
+            return_content: yes
+          register: existing_tags_resp
+      name: Get existing tags (with fresh OAuth)
+
+    - name: Set existing tag names
+      set_fact:
+        existing_tags: "{{ existing_tags_resp.json | map(attribute='name') | list }}"
+
+    - name: Get unique tags to create
+      set_fact:
+        unique_tags: "{{ machine_tag_pairs | map(attribute='tag') | unique }}"
+
+
+    - name: Create new tags
+      block:
+        - name: Generate OAuth components (create tag)
+          set_fact:
+            timestamp: "{{ lookup('pipe', 'date +%s') }}"
+            nonce: "{{ lookup('pipe', 'uuidgen') | replace('-', '') }}"
+
+        - name: Construct Authorization header (create tag)
+          set_fact:
+            auth_header: >-
+              OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ nonce }}",oauth_timestamp="{{ timestamp }}"
+
+        - name: Create new tag
+          uri:
+            url: "{{ maas_url }}/api/2.0/tags/"
+            headers:
+              Authorization: "{{ auth_header }}"
+              Accept: "application/json"
+            method: POST
+            body_format: form-urlencoded
+            body:
+              name: "{{ item }}"
+              comment: "Created by Ansible for Juju tagging"
+            status_code: 201
+          loop: "{{ unique_tags | difference(existing_tags) }}"
+          loop_control:
+            label: "{{ item }}"
+
+    - name: Group system_ids by tag
+      set_fact:
+        tag_system_map: "{{ tag_system_map | default({}) | combine({item.tag: tag_system_map[item.tag] | default([]) + [item.system_id]}) }}"
+      loop: "{{ machine_tag_pairs }}"
+
+
+    - name: Assign tag to machines (with fresh OAuth per tag)
       uri:
-        url: "{{ maas_url }}/api/2.0/machines/{{ item.system_id }}/tags/?apikey={{ maas_api_key }}"
+        url: "{{ maas_url }}/api/2.0/tags/{{ item.key }}/?op=update_nodes"
         headers:
+          Authorization: >-
+            OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ lookup('pipe', 'uuidgen') | replace('-', '') }}",oauth_timestamp="{{ lookup('pipe', 'date +%s') }}"
           Accept: "application/json"
         method: POST
         body_format: form-urlencoded
         body:
-          name: "{{ item.tag }}"
-      loop: "{{ machine_tag_pairs }}"
+          add: "{{ item.value }}"
+        status_code: 200
+        return_content: yes
+      loop: "{{ tag_system_map | dict2items }}"
       loop_control:
-        label: "{{ item.hostname }}:{{ item.tag }}"
+        label: "{{ item.key }}"
+      register: tag_results
+
+    - name: Debug tag assignment results
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ tag_results.results }}"
+      when: tag_results is defined
