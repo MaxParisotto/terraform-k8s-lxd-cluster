@@ -1,3 +1,8 @@
+# MAAS profile variable for CLI tagging
+variable "maas_profile" {
+  description = "The MAAS profile name to use with the MAAS CLI. Should match your 'maas login' profile."
+  type        = string
+}
 
 
 
@@ -103,5 +108,6 @@ resource "maas_tag" "roles" {
   name     = each.key
 }
 
-# Assign tags to machines after creation
+
+
 

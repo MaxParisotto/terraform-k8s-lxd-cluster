@@ -25,7 +25,7 @@ applications:
       gui-y: '420'
     channel: 1.31/stable
     charm: easyrsa
-    constraints: cores=1 mem=4G root-disk=16G
+    constraints: cores=1 mem=4G root-disk=16G tags=easyrsa
     num_units: 1
   etcd:
     annotations:
@@ -33,7 +33,7 @@ applications:
       gui-y: '420'
     channel: 1.31/stable
     charm: etcd
-    constraints: cores=2 mem=8G root-disk=16G
+    constraints: cores=2 mem=8G root-disk=16G tags=etcd
     num_units: 3
     options:
       channel: 3.4/stable
@@ -43,7 +43,7 @@ applications:
       gui-y: '250'
     channel: 1.31/stable
     charm: kubeapi-load-balancer
-    constraints: cores=1 mem=4G root-disk=16G
+    constraints: cores=1 mem=4G root-disk=16G tags=kubeapi-lb
     expose: true
     num_units: 1
   kubernetes-control-plane:
@@ -52,8 +52,8 @@ applications:
       gui-y: '850'
     channel: 1.31/stable
     charm: kubernetes-control-plane
-    constraints: cores=2 mem=8G root-disk=16G
-    num_units: 2
+    constraints: cores=2 mem=8G root-disk=16G tags=control-plane
+    num_units: 4
     options:
       channel: 1.31/stable
   kubernetes-worker:
@@ -62,9 +62,9 @@ applications:
       gui-y: '850'
     channel: 1.31/stable
     charm: kubernetes-worker
-    constraints: cores=2 mem=8G root-disk=16G
+    constraints: cores=2 mem=8G root-disk=16G tags=worker
     expose: true
-    num_units: 3
+    num_units: 4
     options:
       channel: 1.31/stable
 relations:
