@@ -29,7 +29,7 @@ locals {
       name = "mysql-1"
       hostname = "mysql-1"
       vm_host = local.nodes[0]
-      cores = 2
+      cores = 4
       memory = 8192
       longhorn_disk = false
       boot_disk_size = 64
@@ -39,7 +39,7 @@ locals {
       name = "mysql-2"
       hostname = "mysql-2"
       vm_host = local.nodes[2]
-      cores = 2
+      cores = 4
       memory = 8192
       longhorn_disk = false
       boot_disk_size = 64
@@ -49,7 +49,7 @@ locals {
       name = "mysql-3"
       hostname = "mysql-3"
       vm_host = local.nodes[1]
-      cores = 2
+      cores = 4
       memory = 8192
       longhorn_disk = false
       boot_disk_size = 64
@@ -74,7 +74,7 @@ locals {
     name = "easyrsa-0"
     hostname = "easyrsa-0"
     vm_host = local.nodes[3]
-    cores = 1
+    cores = 4
     memory = 4096
     longhorn_disk = false
     boot_disk_size = 16
@@ -130,7 +130,7 @@ locals {
     name = "etcd-2"
     hostname = "etcd-2"
     vm_host = local.nodes[1]
-    cores = 2
+    cores = 4
     memory = 8192
     longhorn_disk = false
     boot_disk_size = 20
@@ -142,7 +142,7 @@ locals {
     name = "etcd-1"
     hostname = "etcd-1"
     vm_host = local.nodes[2]
-    cores = 2
+    cores = 4
     memory = 8192
     longhorn_disk = false
     boot_disk_size = 20
@@ -154,7 +154,7 @@ locals {
     name = "etcd-3"
     hostname = "etcd-3"
     vm_host = local.nodes[0]
-    cores = 2
+    cores = 4
     memory = 8192
     longhorn_disk = false
     boot_disk_size = 20
@@ -166,21 +166,21 @@ locals {
     name = "lb-1"
     hostname = "lb-1"
     vm_host = local.nodes[3]
-    cores = 4
+    cores = 8
     memory = 8192
     longhorn_disk = false
-    boot_disk_size = 16
+    boot_disk_size = 15
     bundle_machine = "machine-12"
   }]
   
-  # Machine 13-16: workers (unique: 8 cores, 16GB RAM, 64GB disk + 300GB Longhorn)
+  # Machine 13-16: workers (unique: 16 cores, 32GB RAM, 64GB disk + 300GB Longhorn)
   workers = [
     {
       name = "worker-1"
       hostname = "worker-1"
       vm_host = local.nodes[0]
-      cores = 8
-      memory = 16384
+      cores = 16
+      memory = 32768
       longhorn_disk = true
       boot_disk_size = 64
       bundle_machine = "machine-13"
@@ -189,8 +189,8 @@ locals {
       name = "worker-2"
       hostname = "worker-2"
       vm_host = local.nodes[1]
-      cores = 8
-      memory = 16384
+      cores = 16
+      memory = 32768
       longhorn_disk = true
       boot_disk_size = 64
       bundle_machine = "machine-14"
@@ -199,8 +199,8 @@ locals {
       name = "worker-3"
       hostname = "worker-3"
       vm_host = local.nodes[2]
-      cores = 8
-      memory = 16384
+      cores = 16
+      memory = 32768
       longhorn_disk = true
       boot_disk_size = 64
       bundle_machine = "machine-15"
@@ -209,20 +209,20 @@ locals {
       name = "worker-4"
       hostname = "worker-4"
       vm_host = local.nodes[3]
-      cores = 8
-      memory = 16384
+      cores = 16
+      memory = 32768
       longhorn_disk = true
       boot_disk_size = 64
       bundle_machine = "machine-16"
     }
   ]
   
-  # Machine 7: spare (unique: 2 cores, 8GB RAM, 16GB disk)
+  # Machine 7: spare (unique: 4 cores, 8GB RAM, 16GB disk)
   spare = [{
     name = "spare-1"
     hostname = "spare-1"
     vm_host = local.nodes[2]
-    cores = 2
+    cores = 4
     memory = 8192
     longhorn_disk = false
     boot_disk_size = 16
