@@ -1,4 +1,3 @@
-
 applications:
   easyrsa: {}
   mysql-innodb-cluster:
@@ -15,11 +14,15 @@ applications:
   vault:
     channel: 1.17/stable
     charm: vault
+    constraints: cores=2 mem=16G root-disk=32G
     num_units: 1
     to: [{{ vault_machine_number }}]
   vault-mysql-router:
     channel: latest/edge
     charm: mysql-router
+    constraints: cores=6 mem=8G root-disk=16G
+    num_units: 1
+    to: [{{ vault_machine_number }}]
 
 machines:
   {{ (overlay_machines | default({})) | to_nice_yaml(indent=4) | indent(2) }}

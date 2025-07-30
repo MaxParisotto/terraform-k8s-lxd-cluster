@@ -23,18 +23,18 @@ applications:
 
 machines:
   12:
-      constraints: cores=2 mem=8G root-disk=16G
+      constraints: cores=2 mem=8G root-disk=64G
       id: tg7brh
       series: noble
   13:
-      constraints: cores=2 mem=8G root-disk=16G
+      constraints: cores=2 mem=8G root-disk=64G
       id: knbcdm
       series: noble
   14:
-      constraints: cores=2 mem=8G root-disk=16G
+      constraints: cores=2 mem=8G root-disk=64G
       id: rb3apw
       series: noble
   15:
-      constraints: cores=2 mem=8G root-disk=16G
+      constraints: cores=6 mem=16G root-disk=32G
       id: a76hn3
       series: noble

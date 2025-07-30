@@ -25,13 +25,17 @@
       mysql-2: ["mysql"]
       mysql-3: ["mysql"]
       vault-1: ["vault"]
-      haproxy-1: ["haproxy"]
-      haproxy-2: ["haproxy"]
-
-
+      easyrsa-0: ["easyrsa"]
+      lb-1: ["load-balancer"]
+      spare-1: ["spare"]
 
     # List of hostnames in the desired Juju machine order
     juju_hostnames:
+      - easyrsa-0
+      - etcd-1
+      - etcd-2
+      - etcd-3
+      - lb-1
       - cp-1
       - cp-2
       - cp-3
@@ -40,15 +44,11 @@
       - worker-2
       - worker-3
       - worker-4
-      - etcd-1
-      - etcd-2
-      - etcd-3
       - mysql-1
       - mysql-2
       - mysql-3
       - vault-1
-      - haproxy-1
-      - haproxy-2
+      - spare-1
 
   tasks:
 
@@ -163,156 +163,4 @@
         url: "{{ maas_url }}/api/2.0/tags/{{ item.key }}/?op=update_nodes"
         headers:
           Authorization: >-
-            OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ lookup('pipe', 'uuidgen') | replace('-', '') }}",oauth_timestamp="{{ lookup('pipe', 'date +%s') }}"
-          Accept: "application/json"
-        method: POST
-        body_format: form-urlencoded
-        body:
-          add: "{{ item.value }}"
-        status_code: 200
-        return_content: yes
-      loop: "{{ tag_system_map | dict2items }}"
-      loop_control:
-        label: "{{ item.key }}"
-      register: tag_results
-
-    - name: Debug tag assignment results
-      debug:
-        msg: "{{ item }}"
-      loop: "{{ tag_results.results }}"
-      when: tag_results is defined
-
-    # --- Render bundle.yaml from Jinja2 template with dynamic machines section ---
-    - name: Build ordered list of MAAS system_ids for Juju hostnames
-      set_fact:
-        juju_machines_ordered: "{{ juju_hostnames | map('extract', host_to_system_id_map) | list }}"
-      vars:
-        host_to_system_id_map: >-
-          {{ dict(machines_to_tag | map(attribute='hostname') | zip(machines_to_tag | map(attribute='system_id'))) }}
-      when: machines_to_tag is defined
-
-    - name: Render bundle.yaml from template with correct MAAS system IDs
-      ansible.builtin.template:
-        src: bundle.yaml.j2
-        dest: ./bundle.yaml
-      vars:
-        juju_machines_ordered: "{{ juju_machines_ordered }}"
-      when: juju_machines_ordered is defined
-
-    # --- Render vault-pki-overlay.yaml from Jinja2 template with dynamic machines section ---
-
-
-    - name: Set vault and vault-mysql-router machine numbers and system IDs
-      set_fact:
-        vault_machine_number: 15
-        vault_mysql_router_machine_number: 16
-        vault_system_id: "{{ host_to_system_id_map['vault-1'] }}"
-        vault_mysql_router_system_id: "{{ host_to_system_id_map['haproxy-2'] }}"
-      vars:
-        host_to_system_id_map: >-
-          {{ dict(machines_to_tag | map(attribute='hostname') | zip(machines_to_tag | map(attribute='system_id'))) }}
-      when: machines_to_tag is defined
-
-    - name: Set MySQL machine numbers and system IDs for overlay
-      set_fact:
-        mysql_1_machine_number: 12
-        mysql_2_machine_number: 13
-        mysql_3_machine_number: 14
-        mysql_1_system_id: "{{ host_to_system_id_map['mysql-1'] }}"
-        mysql_2_system_id: "{{ host_to_system_id_map['mysql-2'] }}"
-        mysql_3_system_id: "{{ host_to_system_id_map['mysql-3'] }}"
-      vars:
-        host_to_system_id_map: >-
-          {{ dict(machines_to_tag | map(attribute='hostname') | zip(machines_to_tag | map(attribute='system_id'))) }}
-      when: machines_to_tag is defined
-
-    - name: Set overlay_machines for overlay rendering
-      set_fact:
-        overlay_machines: >-
-          {{ {
-            mysql_1_machine_number: {
-              'series': 'noble',
-              'constraints': 'cores=2 mem=8G root-disk=16G',
-              'id': mysql_1_system_id
-            },
-            mysql_2_machine_number: {
-              'series': 'noble',
-              'constraints': 'cores=2 mem=8G root-disk=16G',
-              'id': mysql_2_system_id
-            },
-            mysql_3_machine_number: {
-              'series': 'noble',
-              'constraints': 'cores=2 mem=8G root-disk=16G',
-              'id': mysql_3_system_id
-            },
-            vault_machine_number: {
-              'series': 'noble',
-              'constraints': 'cores=2 mem=8G root-disk=16G',
-              'id': vault_system_id
-            }
-          } }}
-      when: mysql_1_machine_number is defined and mysql_1_system_id is defined and mysql_2_machine_number is defined and mysql_2_system_id is defined and mysql_3_machine_number is defined and mysql_3_system_id is defined and vault_machine_number is defined and vault_system_id is defined and vault_mysql_router_machine_number is defined and vault_mysql_router_system_id is defined
-
-    - name: Set overlay applications for overlay rendering
-      set_fact:
-        overlay_applications:
-          easyrsa: {}
-          mysql-innodb-cluster:
-            to: [12, 13, 14]
-            channel: latest/edge
-            charm: mysql-innodb-cluster
-            constraints: cores=2 mem=8G root-disk=64G
-            num_units: 3
-            options:
-              enable-binlogs: true
-              innodb-buffer-pool-size: 256M
-              max-connections: 2000
-              wait-timeout: 3600
-          vault:
-            to: [15]
-            channel: 1.17/stable
-            charm: vault
-            num_units: 1
-          vault-mysql-router:
-            channel: latest/edge
-            charm: mysql-router
-          etcd:
-            to: [5, 11, 3]
-          kubeapi-load-balancer:
-            to: [8]
-          kubernetes-control-plane:
-            to: [9, 1]
-          kubernetes-worker:
-            to: [10, 12, 13]
-          containerd:
-            to: [6]
-          calico:
-            to: [7]
-          haproxy:
-            to: [4, 13]
-      vars:
-        host_to_system_id_map: "{{ dict(machines_to_tag | map(attribute='hostname') | zip(machines_to_tag | map(attribute='system_id'))) }}"
-      when: machines_to_tag is defined
-
-    - name: Set overlay relations for overlay rendering
-      set_fact:
-        overlay_relations:
-          - ["vault:shared-db", "vault-mysql-router:shared-db"]
-          - ["vault-mysql-router:db-router", "mysql-innodb-cluster:db-router"]
-          - ["vault:certificates", "easyrsa:client"]
-          - ["vault:etcd", "etcd:db"]
-      when: machines_to_tag is defined
-
-    - name: Render vault-pki-overlay.yaml from template with correct MAAS system IDs
-      ansible.builtin.template:
-        src: vault-pki-overlay.yaml.j2
-        dest: ./vault-pki-overlay.yaml
-      vars:
-        vault_machine_number: "{{ vault_machine_number }}"
-        vault_mysql_router_machine_number: "{{ vault_mysql_router_machine_number }}"
-        vault_system_id: "{{ vault_system_id }}"
-        vault_mysql_router_system_id: "{{ vault_mysql_router_system_id }}"
-        overlay_applications: "{{ overlay_applications }}"
-        overlay_relations: "{{ overlay_relations }}"
-        overlay_machines: "{{ overlay_machines }}"
-      when: vault_machine_number is defined and vault_system_id is defined
+            OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{
