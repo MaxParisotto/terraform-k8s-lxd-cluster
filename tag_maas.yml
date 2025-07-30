@@ -1,0 +1,65 @@
+---
+- name: Tag MAAS machines by hostname
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    maas_api_key: "wZaVDgSiTL9Qi6xy1Y:iAQtxbsRC7CDEVWER4:LgzJQLZHDXPar9e6uhLGv7XjhrkDlBNf"
+    maas_url: "http://172.16.0.100:5240/MAAS"
+    host_tag_map:
+      cp-1: ["control-plane"]
+      cp-2: ["control-plane"]
+      cp-3: ["control-plane"]
+      cp-4: ["control-plane"]
+      worker-1: ["worker"]
+      worker-2: ["worker"]
+      worker-3: ["worker"]
+      worker-4: ["worker"]
+      etcd-1: ["etcd"]
+      etcd-2: ["etcd"]
+      etcd-3: ["etcd"]
+      mysql-1: ["mysql"]
+      mysql-2: ["mysql"]
+      mysql-3: ["mysql"]
+      vault-1: ["vault"]
+      haproxy-1: ["haproxy"]
+      haproxy-2: ["haproxy"]
+
+  tasks:
+    - name: Get all MAAS machines
+      uri:
+        url: "{{ maas_url }}/api/2.0/machines/?apikey={{ maas_api_key }}"
+        headers:
+          Accept: "application/json"
+        method: GET
+        return_content: yes
+      register: machines
+
+    - name: Build machine/tag pairs
+      set_fact:
+        machine_tag_pairs: >-
+          {{
+            machine_tag_pairs | default([]) +
+            [
+              {'system_id': item.0.system_id, 'hostname': item.0.hostname, 'tag': item.1}
+            ]
+          }}
+      with_subelements:
+        - "{{ machines.json.objects }}"
+        - tags
+      vars:
+        tags: "{{ host_tag_map.get(item.0.hostname, []) }}"
+      when: tags | length > 0
+
+    - name: Tag each machine
+      uri:
+        url: "{{ maas_url }}/api/2.0/machines/{{ item.system_id }}/tags/?apikey={{ maas_api_key }}"
+        headers:
+          Accept: "application/json"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          name: "{{ item.tag }}"
+      loop: "{{ machine_tag_pairs }}"
+      loop_control:
+        label: "{{ item.hostname }}:{{ item.tag }}"
