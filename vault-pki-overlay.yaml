@@ -1,3 +1,4 @@
+---
 applications:
   easyrsa: null
   mysql-innodb-cluster:
@@ -10,7 +11,10 @@ applications:
       innodb-buffer-pool-size: 256M
       max-connections: 2000
       wait-timeout: 3600
-    to: [13, 14, 15]
+    to:
+      - 13
+      - 14
+      - 15
   vault:
     channel: 1.7/stable
     charm: vault
@@ -19,21 +23,25 @@ applications:
     options:
       # this makes Vault act as a self-signed root CA
       auto-generate-root-ca-cert: true
-    to: [16]
+    to:
+      - 16
   vault-mysql-router:
     channel: 8.0/stable
     charm: mysql-router
+    num_units: 1
+    to:
+      - 16
 
 relations:
-- - etcd:certificates
-  - vault:certificates
-- - kubeapi-load-balancer:certificates
-  - vault:certificates
-- - kubernetes-control-plane:certificates
-  - vault:certificates
-- - kubernetes-worker:certificates
-  - vault:certificates
-- - mysql-innodb-cluster:db-router
-  - vault-mysql-router:db-router
-- - vault-mysql-router:shared-db
-  - vault:shared-db
+  - - etcd:certificates
+    - vault:certificates
+  - - kubeapi-load-balancer:certificates
+    - vault:certificates
+  - - kubernetes-control-plane:certificates
+    - vault:certificates
+  - - kubernetes-worker:certificates
+    - vault:certificates
+  - - mysql-innodb-cluster:db-router
+    - vault-mysql-router:db-router
+  - - vault-mysql-router:shared-db
+    - vault:shared-db

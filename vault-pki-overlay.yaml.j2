@@ -23,6 +23,8 @@ applications:
   vault-mysql-router:
     channel: 8.0/stable
     charm: mysql-router
+    num_units: 1
+    to: [{{ juju_machines_ordered.index(hostname_to_system_id_map['vault-1']) }}]
 
 relations:
 - - etcd:certificates

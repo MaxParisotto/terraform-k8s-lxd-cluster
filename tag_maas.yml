@@ -321,6 +321,7 @@
         machines: "{{ machines }}"
         juju_machines_ordered: "{{ juju_machines_ordered }}"
         hostname_to_system_id_map: "{{ hostname_to_system_id_map }}"
+        all_indices: "{{ machines.keys() | list }}"
 
 
     - name: Generate vault-pki-overlay.yaml from template (with correct machine IDs)

@@ -4,43 +4,70 @@ default-base: ubuntu@22.04
 source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
-{# --- Dynamic machines section --- #}
-{# Get all machine indices from the machines dictionary #}
-{% set all_indices = machines.keys()|sort %}
- 
+
 machines:
-{% for idx in all_indices %}
-  {{ idx }}:
-    series: jammy
-    constraints: {{ machines[idx].constraints if machines[idx] is defined and machines[idx].constraints is defined else 'cores=4 mem=4G root-disk=16G' }}
-    id: {{ machines[idx].id if machines[idx] is defined and machines[idx].id is defined else 'MISSING_ID' }}
+{% for idx in all_indices|sort %}
+    {{ idx }}:
+      series: jammy
+      constraints: {{ machines[idx].constraints if machines[idx] is defined and machines[idx].constraints is defined else 'cores=4 mem=4G root-disk=16G' }}
+      id: {{ machines[idx].id if machines[idx] is defined and machines[idx].id is defined else 'MISSING_ID' }}
 {% endfor %}
+
 applications:
-{{ applications | to_nice_yaml(indent=2) | trim | indent(2, True) }}
+{% for app_name, app_data in applications.items() %}
+    {{ app_name }}:
+      {% if app_data.annotations is defined %}
+      annotations:
+        {% for key, value in app_data.annotations.items() %}
+        {{ key }}: '{{ value }}'
+        {% endfor %}
+      {% endif %}
+      {% if app_data.channel is defined %}
+      channel: {{ app_data.channel }}
+      {% endif %}
+      charm: {{ app_data.charm }}
+      {% if app_data.constraints is defined %}
+      constraints: {{ app_data.constraints }}
+      {% endif %}
+      {% if app_data.num_units is defined %}
+      num_units: {{ app_data.num_units }}
+      {% endif %}
+      {% if app_data.options is defined %}
+      options:
+        {% for key, value in app_data.options.items() %}
+        {{ key }}: {{ value }}
+        {% endfor %}
+      {% endif %}
+      {% if app_data.to is defined %}
+      to:
+        - {% for item in app_data.to %}'{{ item }}'{% if not loop.last %}, {% endif %}{% endfor %}
+      {% endif %}
+{% endfor %}
+
 relations:
-- - kubernetes-control-plane:loadbalancer-external
-  - kubeapi-load-balancer:lb-consumers
-- - kubernetes-control-plane:loadbalancer-internal
-  - kubeapi-load-balancer:lb-consumers
-- - kubernetes-control-plane:kube-control
-  - kubernetes-worker:kube-control
-- - kubernetes-control-plane:certificates
-  - easyrsa:client
-- - etcd:certificates
-  - easyrsa:client
-- - kubernetes-control-plane:etcd
-  - etcd:db
-- - kubernetes-worker:certificates
-  - easyrsa:client
-- - kubeapi-load-balancer:certificates
-  - easyrsa:client
-- - calico:etcd
-  - etcd:db
-- - calico:cni
-  - kubernetes-control-plane:cni
-- - calico:cni
-  - kubernetes-worker:cni
-- - containerd:containerd
-  - kubernetes-worker:container-runtime
-- - containerd:containerd
-  - kubernetes-control-plane:container-runtime
+    - - kubernetes-control-plane:loadbalancer-external
+      - kubeapi-load-balancer:lb-consumers
+    - - kubernetes-control-plane:loadbalancer-internal
+      - kubeapi-load-balancer:lb-consumers
+    - - kubernetes-control-plane:kube-control
+      - kubernetes-worker:kube-control
+    - - kubernetes-control-plane:certificates
+      - easyrsa:client
+    - - etcd:certificates
+      - easyrsa:client
+    - - kubernetes-control-plane:etcd
+      - etcd:db
+    - - kubernetes-worker:certificates
+      - easyrsa:client
+    - - kubeapi-load-balancer:certificates
+      - easyrsa:client
+    - - calico:etcd
+      - etcd:db
+    - - calico:cni
+      - kubernetes-control-plane:cni
+    - - calico:cni
+      - kubernetes-worker:cni
+    - - containerd:containerd
+      - kubernetes-worker:container-runtime
+    - - containerd:containerd
+      - kubernetes-control-plane:container-runtime

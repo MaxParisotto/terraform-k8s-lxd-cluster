@@ -1,212 +1,213 @@
+---
 description: A highly-available, production-grade Kubernetes cluster.
 issues: https://bugs.launchpad.net/charmed-kubernetes-bundles
 default-base: ubuntu@22.04
 source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
- 
+
 machines:
-  0:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: wp8qcw
-  1:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: pmc3yy
-  10:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: xaeacs
-  11:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: cmskcm
-  12:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: rak7fg
-  13:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=64G
-    id: xq7tpq
-  14:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=64G
-    id: 7b6tdk
-  15:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=64G
-    id: ksc6sn
-  16:
-    series: jammy
-    constraints: cores=6 mem=16G root-disk=32G
-    id: paxs78
-  2:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: bqyxhp
-  3:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: qdhh6m
-  4:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: nfr8cs
-  5:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=20G
-    id: xhtkyw
-  6:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=20G
-    id: b4f74t
-  7:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=20G
-    id: hgkeax
-  8:
-    series: jammy
-    constraints: cores=8 mem=8G root-disk=15G
-    id: adqb4b
-  9:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: t7fahr
+    0:
+        series: jammy
+        constraints: cores=4 mem=4G root-disk=16G
+        id: wp8qcw
+    1:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=16G
+        id: pmc3yy
+    10:
+        series: jammy
+        constraints: cores=16 mem=32G root-disk=64G
+        id: xaeacs
+    11:
+        series: jammy
+        constraints: cores=16 mem=32G root-disk=64G
+        id: cmskcm
+    12:
+        series: jammy
+        constraints: cores=16 mem=32G root-disk=64G
+        id: rak7fg
+    13:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=64G
+        id: xq7tpq
+    14:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=64G
+        id: 7b6tdk
+    15:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=64G
+        id: ksc6sn
+    16:
+        series: jammy
+        constraints: cores=6 mem=16G root-disk=32G
+        id: paxs78
+    2:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=16G
+        id: bqyxhp
+    3:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=16G
+        id: qdhh6m
+    4:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=16G
+        id: nfr8cs
+    5:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=20G
+        id: xhtkyw
+    6:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=20G
+        id: b4f74t
+    7:
+        series: jammy
+        constraints: cores=4 mem=8G root-disk=20G
+        id: hgkeax
+    8:
+        series: jammy
+        constraints: cores=8 mem=8G root-disk=15G
+        id: adqb4b
+    9:
+        series: jammy
+        constraints: cores=16 mem=32G root-disk=64G
+        id: t7fahr
+
 applications:
-  calico:
-    annotations:
-      gui-x: '475'
-      gui-y: '605'
-    channel: 1.31/stable
-    charm: calico
-    options:
-      vxlan: Always
-  containerd:
-    annotations:
-      gui-x: '475'
-      gui-y: '800'
-    channel: 1.31/stable
-    charm: containerd
-  easyrsa:
-    annotations:
-      gui-x: '90'
-      gui-y: '420'
-    channel: 1.31/stable
-    charm: easyrsa
-    constraints: cores=4 mem=4G root-disk=16G
-    num_units: 1
-    to:
-    - 0
-  etcd:
-    annotations:
-      gui-x: '800'
-      gui-y: '420'
-    channel: 1.31/stable
-    charm: etcd
-    constraints: cores=4 mem=8G root-disk=20G
-    num_units: 3
-    options:
-      channel: 3.4/stable
-    to:
-    - '5'
-    - '6'
-    - '7'
-  kubeapi-load-balancer:
-    annotations:
-      gui-x: '450'
-      gui-y: '250'
-    channel: 1.31/stable
-    charm: kubeapi-load-balancer
-    constraints: cores=8 mem=8G root-disk=15G
-    expose: true
-    num_units: 1
-    to:
-    - '8'
-  kubernetes-control-plane:
-    annotations:
-      gui-x: '800'
-      gui-y: '850'
-    channel: 1.31/stable
-    charm: kubernetes-control-plane
-    constraints: cores=4 mem=8G root-disk=16G
-    num_units: 4
-    options:
-      channel: 1.31/stable
-    to:
-    - '1'
-    - '2'
-    - '3'
-    - '4'
-  kubernetes-worker:
-    annotations:
-      gui-x: '90'
-      gui-y: '850'
-    channel: 1.31/stable
-    charm: kubernetes-worker
-    constraints: cores=16 mem=32G root-disk=64G
-    expose: true
-    num_units: 4
-    options:
-      channel: 1.31/stable
-    to:
-    - '9'
-    - '10'
-    - '11'
-    - '12'
-  mysql-innodb-cluster:
-    annotations:
-      gui-x: '650'
-      gui-y: '420'
-    charm: mysql-innodb-cluster
-    constraints: cores=4 mem=8G root-disk=64G
-    num_units: 3
-    options:
-      enable-binlogs: true
-      innodb-buffer-pool-size: 256M
-      max-connections: 2000
-      wait-timeout: 3600
-    to:
-    - '13'
-    - '14'
-    - '15'
-  vault:
-    annotations:
-      gui-x: '650'
-      gui-y: '200'
-    channel: 1.7/stable
-    charm: vault
-    constraints: cores=6 mem=16G root-disk=32G
-    num_units: 1
-    options:
-      auto-generate-root-ca-cert: true
-    to:
-    - '16'
+    calico:
+        annotations:
+            gui-x: '475'
+            gui-y: '605'
+        channel: 1.31/stable
+        charm: calico
+        options:
+            vxlan: Always
+    containerd:
+        annotations:
+            gui-x: '475'
+            gui-y: '800'
+        channel: 1.31/stable
+        charm: containerd
+    easyrsa:
+        annotations:
+            gui-x: '90'
+            gui-y: '420'
+        channel: 1.31/stable
+        charm: easyrsa
+        constraints: cores=4 mem=4G root-disk=16G
+        num_units: 1
+        to:
+            - 0
+    etcd:
+        annotations:
+            gui-x: '800'
+            gui-y: '420'
+        channel: 1.31/stable
+        charm: etcd
+        constraints: cores=4 mem=8G root-disk=20G
+        num_units: 3
+        options:
+            channel: 3.4/stable
+        to:
+            - 5
+            - 6
+            - 7
+    kubeapi-load-balancer:
+        annotations:
+            gui-x: '450'
+            gui-y: '250'
+        channel: 1.31/stable
+        charm: kubeapi-load-balancer
+        constraints: cores=8 mem=8G root-disk=15G
+        num_units: 1
+        to:
+            - 8
+    kubernetes-control-plane:
+        annotations:
+            gui-x: '800'
+            gui-y: '850'
+        channel: 1.31/stable
+        charm: kubernetes-control-plane
+        constraints: cores=4 mem=8G root-disk=16G
+        num_units: 4
+        options:
+            channel: 1.31/stable
+        to:
+            - 1
+            - 2
+            - 3
+            - 4
+    kubernetes-worker:
+        annotations:
+            gui-x: '90'
+            gui-y: '850'
+        channel: 1.31/stable
+        charm: kubernetes-worker
+        constraints: cores=16 mem=32G root-disk=64G
+        num_units: 4
+        options:
+            channel: 1.31/stable
+        to:
+            - 9
+            - 10
+            - 11
+            - 12
+    mysql-innodb-cluster:
+        annotations:
+            gui-x: '650'
+            gui-y: '420'
+        charm: mysql-innodb-cluster
+        constraints: cores=4 mem=8G root-disk=64G
+        num_units: 3
+        options:
+            enable-binlogs: true
+            innodb-buffer-pool-size: 256M
+            max-connections: 2000
+            wait-timeout: 3600
+        to:
+            - 13
+            - 14
+            - 15
+    vault:
+        annotations:
+            gui-x: '650'
+            gui-y: '200'
+        channel: 1.7/stable
+        charm: vault
+        constraints: cores=6 mem=16G root-disk=32G
+        num_units: 1
+        options:
+            auto-generate-root-ca-cert: true
+        to:
+            - 16
+
 relations:
-- - kubernetes-control-plane:loadbalancer-external
-  - kubeapi-load-balancer:lb-consumers
-- - kubernetes-control-plane:loadbalancer-internal
-  - kubeapi-load-balancer:lb-consumers
-- - kubernetes-control-plane:kube-control
-  - kubernetes-worker:kube-control
-- - kubernetes-control-plane:certificates
-  - easyrsa:client
-- - etcd:certificates
-  - easyrsa:client
-- - kubernetes-control-plane:etcd
-  - etcd:db
-- - kubernetes-worker:certificates
-  - easyrsa:client
-- - kubeapi-load-balancer:certificates
-  - easyrsa:client
-- - calico:etcd
-  - etcd:db
-- - calico:cni
-  - kubernetes-control-plane:cni
-- - calico:cni
-  - kubernetes-worker:cni
-- - containerd:containerd
-  - kubernetes-worker:container-runtime
-- - containerd:containerd
-  - kubernetes-control-plane:container-runtime
+    - - kubernetes-control-plane:loadbalancer-external
+      - kubeapi-load-balancer:lb-consumers
+    - - kubernetes-control-plane:loadbalancer-internal
+      - kubeapi-load-balancer:lb-consumers
+    - - kubernetes-control-plane:kube-control
+      - kubernetes-worker:kube-control
+    - - kubernetes-control-plane:certificates
+      - easyrsa:client
+    - - etcd:certificates
+      - easyrsa:client
+    - - kubernetes-control-plane:etcd
+      - etcd:db
+    - - kubernetes-worker:certificates
+      - easyrsa:client
+    - - kubeapi-load-balancer:certificates
+      - easyrsa:client
+    - - calico:etcd
+      - etcd:db
+    - - calico:cni
+      - kubernetes-control-plane:cni
+    - - calico:cni
+      - kubernetes-worker:cni
+    - - containerd:containerd
+      - kubernetes-worker:container-runtime
+    - - containerd:containerd
+      - kubernetes-control-plane:container-runtime
