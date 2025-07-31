@@ -4,76 +4,76 @@ default-base: ubuntu@22.04
 source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+ 
 machines:
   0:
     series: jammy
     constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    id: wp8qcw
   1:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  2:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  3:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  4:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  5:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  6:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  7:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  8:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
-  9:
-    series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=4 mem=8G root-disk=16G
+    id: pmc3yy
   10:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=16 mem=32G root-disk=64G
+    id: xaeacs
   11:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=16 mem=32G root-disk=64G
+    id: cmskcm
   12:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=16 mem=32G root-disk=64G
+    id: rak7fg
   13:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=4 mem=8G root-disk=64G
+    id: xq7tpq
   14:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=4 mem=8G root-disk=64G
+    id: 7b6tdk
   15:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=4 mem=8G root-disk=64G
+    id: ksc6sn
   16:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: MISSING_ID
+    constraints: cores=6 mem=16G root-disk=32G
+    id: paxs78
+  2:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: bqyxhp
+  3:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: qdhh6m
+  4:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=16G
+    id: nfr8cs
+  5:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=20G
+    id: xhtkyw
+  6:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=20G
+    id: b4f74t
+  7:
+    series: jammy
+    constraints: cores=4 mem=8G root-disk=20G
+    id: hgkeax
+  8:
+    series: jammy
+    constraints: cores=8 mem=8G root-disk=15G
+    id: adqb4b
+  9:
+    series: jammy
+    constraints: cores=16 mem=32G root-disk=64G
+    id: t7fahr
 applications:
   calico:
     annotations:

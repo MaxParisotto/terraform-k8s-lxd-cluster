@@ -5,20 +5,11 @@ source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
 {# --- Dynamic machines section --- #}
-{% set all_indices = [] %}
-{% for app, appdata in applications.items() %}
-  {% if appdata.to is defined %}
-    {% for idx in appdata.to %}
-      {% set idx_int = idx|int %}
-      {% if idx_int not in all_indices %}
-        {% set _ = all_indices.append(idx_int) %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-{% endfor %}
+{# Get all machine indices from the machines dictionary #}
+{% set all_indices = machines.keys()|sort %}
  
 machines:
-{% for idx in all_indices|sort %}
+{% for idx in all_indices %}
   {{ idx }}:
     series: jammy
     constraints: {{ machines[idx].constraints if machines[idx] is defined and machines[idx].constraints is defined else 'cores=4 mem=4G root-disk=16G' }}

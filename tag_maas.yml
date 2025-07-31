@@ -275,6 +275,42 @@
             to:
               - "{{ vault_1_idx }}"
         machines: {}
+        # Define constraints for different machine types
+        machine_constraints:
+          easyrsa: cores=4 mem=4G root-disk=16G
+          etcd: cores=4 mem=8G root-disk=20G
+          lb: cores=8 mem=8G root-disk=15G
+          cp: cores=4 mem=8G root-disk=16G
+          worker: cores=16 mem=32G root-disk=64G
+          mysql: cores=4 mem=8G root-disk=64G
+          vault: cores=6 mem=16G root-disk=32G
+
+    - name: Build machines dictionary with proper IDs and constraints
+      set_fact:
+        machines: >
+          {% set machines_dict = {} %}
+          {% for hostname, system_id in hostname_to_system_id_map.items() %}
+            {% if system_id != '' %}
+              {% set idx = juju_machines_ordered.index(system_id) %}
+              {% set machine_type = hostname.split('-')[0] %}
+              {% set constraints = machine_constraints[machine_type] | default('cores=4 mem=4G root-disk=16G') %}
+              {% set _ = machines_dict.update({
+                idx|int: {
+                  'id': system_id,
+                  'constraints': constraints
+                }
+              }) %}
+            {% endif %}
+          {% endfor %}
+          {{ machines_dict | to_nice_json }}
+
+    - name: Debug machines dictionary before template rendering
+      debug:
+        var: machines
+
+    - name: Convert machines string back to dictionary
+      set_fact:
+        machines: "{{ machines | from_json }}"
 
     - name: Generate bundle.yaml from template (with correct machine IDs)
       template:
