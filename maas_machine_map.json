@@ -1,0 +1,19 @@
+{
+    "cp-1": "pmc3yy",
+    "cp-2": "bqyxhp",
+    "cp-3": "qdhh6m",
+    "cp-4": "nfr8cs",
+    "easyrsa-0": "wp8qcw",
+    "etcd-1": "xhtkyw",
+    "etcd-2": "b4f74t",
+    "etcd-3": "hgkeax",
+    "lb-1": "adqb4b",
+    "mysql-1": "xq7tpq",
+    "mysql-2": "7b6tdk",
+    "mysql-3": "ksc6sn",
+    "vault-1": "paxs78",
+    "worker-1": "t7fahr",
+    "worker-2": "xaeacs",
+    "worker-3": "cmskcm",
+    "worker-4": "rak7fg"
+}

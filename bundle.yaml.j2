@@ -1,190 +1,31 @@
-# Jinja2 template for bundle.yaml with dynamic machines section and to fields
-# Place this file as bundle.yaml.j2 in your project
-
 description: A highly-available, production-grade Kubernetes cluster.
 issues: https://bugs.launchpad.net/charmed-kubernetes-bundles
 default-base: ubuntu@22.04
 source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
+{# --- Dynamic machines section --- #}
+{% set all_indices = [] %}
+{% for app, appdata in applications.items() %}
+  {% if appdata.to is defined %}
+    {% for idx in appdata.to %}
+      {% set idx_int = idx|int %}
+      {% if idx_int not in all_indices %}
+        {% set _ = all_indices.append(idx_int) %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+ 
 machines:
-  0:
+{% for idx in all_indices|sort %}
+  {{ idx }}:
     series: jammy
-    constraints: cores=4 mem=4G root-disk=16G
-    id: {{ hostname_to_system_id_map['easyrsa-0'] }}
-  1:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: {{ hostname_to_system_id_map['cp-1'] }}
-  2:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: {{ hostname_to_system_id_map['cp-2'] }}
-  3:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: {{ hostname_to_system_id_map['cp-3'] }}
-  4:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=16G
-    id: {{ hostname_to_system_id_map['cp-4'] }}
-  5:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=20G
-    id: {{ hostname_to_system_id_map['etcd-1'] }}
-  6:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=20G
-    id: {{ hostname_to_system_id_map['etcd-2'] }}
-  7:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=20G
-    id: {{ hostname_to_system_id_map['etcd-3'] }}
-  8:
-    series: jammy
-    constraints: cores=8 mem=8G root-disk=15G
-    id: {{ hostname_to_system_id_map['lb-1'] }}
-  9:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: {{ hostname_to_system_id_map['worker-1'] }}
-  10:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: {{ hostname_to_system_id_map['worker-2'] }}
-  11:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: {{ hostname_to_system_id_map['worker-3'] }}
-  12:
-    series: jammy
-    constraints: cores=16 mem=32G root-disk=64G
-    id: {{ hostname_to_system_id_map['worker-4'] }}
-  13:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=64G
-    id: {{ hostname_to_system_id_map['mysql-1'] }}
-  14:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=64G
-    id: {{ hostname_to_system_id_map['mysql-2'] }}
-  15:
-    series: jammy
-    constraints: cores=4 mem=8G root-disk=64G
-    id: {{ hostname_to_system_id_map['mysql-3'] }}
-  16:
-    series: jammy
-    constraints: cores=6 mem=16G root-disk=32G
-    id: {{ hostname_to_system_id_map['vault-1'] }}
+    constraints: {{ machines[idx].constraints if machines[idx] is defined and machines[idx].constraints is defined else 'cores=4 mem=4G root-disk=16G' }}
+    id: {{ machines[idx].id if machines[idx] is defined and machines[idx].id is defined else 'MISSING_ID' }}
+{% endfor %}
 applications:
-  calico:
-    annotations:
-      gui-x: '475'
-      gui-y: '605'
-    channel: 1.31/stable
-    charm: calico
-    options:
-      vxlan: Always
-  containerd:
-    annotations:
-      gui-x: '475'
-      gui-y: '800'
-    channel: 1.31/stable
-    charm: containerd
-  easyrsa:
-    annotations:
-      gui-x: '90'
-      gui-y: '420'
-    channel: 1.31/stable
-    charm: easyrsa
-    constraints: cores=4 mem=4G root-disk=16G
-    num_units: 1
-    to:
-      - 0
-  etcd:
-    annotations:
-      gui-x: '800'
-      gui-y: '420'
-    channel: 1.31/stable
-    charm: etcd
-    constraints: cores=4 mem=8G root-disk=20G
-    num_units: 3
-    options:
-      channel: 3.4/stable
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-3']) }}
-  kubeapi-load-balancer:
-    annotations:
-      gui-x: '450'
-      gui-y: '250'
-    channel: 1.31/stable
-    charm: kubeapi-load-balancer
-    constraints: cores=8 mem=8G root-disk=15G
-    expose: true
-    num_units: 1
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['lb-1']) }}
-  kubernetes-control-plane:
-    annotations:
-      gui-x: '800'
-      gui-y: '850'
-    channel: 1.31/stable
-    charm: kubernetes-control-plane
-    constraints: cores=4 mem=8G root-disk=16G
-    num_units: 4
-    options:
-      channel: 1.31/stable
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-3']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['cp-4']) }}
-  kubernetes-worker:
-    annotations:
-      gui-x: '90'
-      gui-y: '850'
-    channel: 1.31/stable
-    charm: kubernetes-worker
-    constraints: cores=16 mem=32G root-disk=64G
-    expose: true
-    num_units: 4
-    options:
-      channel: 1.31/stable
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-3']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['worker-4']) }}
-  mysql-innodb-cluster:
-    annotations:
-      gui-x: '650'
-      gui-y: '420'
-    charm: mysql-innodb-cluster
-    constraints: cores=4 mem=8G root-disk=64G
-    num_units: 3
-    options:
-      enable-binlogs: true
-      innodb-buffer-pool-size: 256M
-      max-connections: 2000
-      wait-timeout: 3600
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-1']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-2']) }}
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-3']) }}
-  vault:
-    annotations:
-      gui-x: '650'
-      gui-y: '200'
-    channel: 1.7/stable
-    charm: vault
-    constraints: cores=6 mem=16G root-disk=32G
-    num_units: 1
-    options:
-      auto-generate-root-ca-cert: true
-    to:
-      - {{ juju_machines_ordered.index(hostname_to_system_id_map['vault-1']) }}
+{{ applications | to_nice_yaml(indent=2) | trim | indent(2, True) }}
 relations:
 - - kubernetes-control-plane:loadbalancer-external
   - kubeapi-load-balancer:lb-consumers

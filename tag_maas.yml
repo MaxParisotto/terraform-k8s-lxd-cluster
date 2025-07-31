@@ -1,4 +1,3 @@
----
 - name: Tag MAAS machines by hostname
   hosts: localhost
   connection: local
@@ -41,11 +40,30 @@
       register: machines
       failed_when: machines.status != 200
 
+
     - name: Create machine list with tags
       set_fact:
         machines_with_tags: "{{ machines_with_tags | default([]) + [{'hostname': item.hostname, 'system_id': item.system_id, 'tags': host_tag_map[item.hostname] | default([])}] }}"
       loop: "{{ machines.content | from_json }}"
       when: item.hostname in host_tag_map
+
+
+    - name: Debug machines_with_tags after creation
+      debug:
+        var: machines_with_tags
+
+    - name: Debug MAAS hostnames from API
+      debug:
+        msg: "MAAS hostnames: {{ machines.content | from_json | map(attribute='hostname') | list }}"
+
+    - name: Debug host_tag_map keys
+      debug:
+        msg: "host_tag_map keys: {{ host_tag_map.keys() | list }}"
+
+    - name: Build tag to system_id mapping
+      set_fact:
+        tag_system_map: "{{ tag_system_map | default({}) | combine({item.1: tag_system_map[item.1] | default([]) + [item.0.system_id]}) }}"
+      loop: "{{ machines_with_tags | subelements('tags') }}"
 
     - name: Get existing tags
       uri:
@@ -73,36 +91,56 @@
         status_code: 201
       loop: "{{ machines_with_tags | map(attribute='tags') | flatten | unique | difference(existing_tags_resp.json | map(attribute='name') | list) }}"
 
-    - name: Build tag to system_id mapping
-      set_fact:
-        tag_system_map: "{{ tag_system_map | default({}) | combine({item.1: tag_system_map[item.1] | default([]) + [item.0.system_id]}) }}"
-      loop: "{{ machines_with_tags | subelements('tags') }}"
 
-    - name: Assign tags to machines
-      uri:
-        url: "{{ maas_url }}/api/2.0/tags/{{ item.key }}/?op=update_nodes"
-        headers:
-          Authorization: 'OAuth oauth_version="1.0",oauth_signature_method="PLAINTEXT",oauth_consumer_key="{{ consumer_key }}",oauth_token="{{ token_key }}",oauth_signature="&{{ token_secret }}",oauth_nonce="{{ lookup("pipe", "uuidgen") | replace("-", "") }}",oauth_timestamp="{{ lookup("pipe", "date +%s") }}"'
-          Accept: "application/json"
-        method: POST
-        body_format: form-urlencoded
-        body:
-          add: "{{ item.value | join(',') }}"
-        status_code: [200, 302]
-        follow_redirects: all
+    - name: Debug tag_system_map before assigning tags
+      debug:
+        var: tag_system_map
+
+
+    - name: Assign tags to machines using maas CLI
+      command: >
+        maas admin tag update-nodes {{ item.key }} add="{{ item.value | join(',') }}"
       loop: "{{ tag_system_map | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
+      register: tag_assign_results
 
-    - name: Create a hostname to system_id map
+    - name: Debug tag_assign_results after assigning tags
+      debug:
+        var: tag_assign_results
+
+
+    - name: Load hostname to system_id map from file
+      slurp:
+        src: maas_machine_map.json
+      register: machine_map_file
+
+    - name: Set hostname_to_system_id_map fact from file
       set_fact:
-        hostname_to_system_id_map: "{{ hostname_to_system_id_map | default({}) | combine({item.hostname: item.system_id}) }}"
-      loop: "{{ machines_with_tags }}"
+        hostname_to_system_id_map: "{{ machine_map_file.content | b64decode | from_json }}"
 
     - name: Set juju_machines_ordered fact
       set_fact:
         juju_machines_ordered: "{{ [hostname_to_system_id_map['easyrsa-0'] | default(''), hostname_to_system_id_map['cp-1'] | default(''), hostname_to_system_id_map['cp-2'] | default(''), hostname_to_system_id_map['cp-3'] | default(''), hostname_to_system_id_map['cp-4'] | default(''), hostname_to_system_id_map['etcd-1'] | default(''), hostname_to_system_id_map['etcd-2'] | default(''), hostname_to_system_id_map['etcd-3'] | default(''), hostname_to_system_id_map['lb-1'] | default(''), hostname_to_system_id_map['worker-1'] | default(''), hostname_to_system_id_map['worker-2'] | default(''), hostname_to_system_id_map['worker-3'] | default(''), hostname_to_system_id_map['worker-4'] | default(''), hostname_to_system_id_map['mysql-1'] | default(''), hostname_to_system_id_map['mysql-2'] | default(''), hostname_to_system_id_map['mysql-3'] | default(''), hostname_to_system_id_map['vault-1'] | default(''), hostname_to_system_id_map['spare-1'] | default('')] }}"
 
+    - name: Precompute all machine indices as integer facts
+      set_fact:
+        etcd_1_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-1']) | int }}"
+        etcd_2_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-2']) | int }}"
+        etcd_3_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['etcd-3']) | int }}"
+        lb_1_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['lb-1']) | int }}"
+        cp_1_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['cp-1']) | int }}"
+        cp_2_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['cp-2']) | int }}"
+        cp_3_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['cp-3']) | int }}"
+        cp_4_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['cp-4']) | int }}"
+        worker_1_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['worker-1']) | int }}"
+        worker_2_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['worker-2']) | int }}"
+        worker_3_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['worker-3']) | int }}"
+        worker_4_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['worker-4']) | int }}"
+        mysql_1_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-1']) | int }}"
+        mysql_2_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-2']) | int }}"
+        mysql_3_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['mysql-3']) | int }}"
+        vault_1_idx: "{{ juju_machines_ordered.index(hostname_to_system_id_map['vault-1']) | int }}"
     - name: Set vault_machine_ids fact
       set_fact:
         vault_machine_ids:
@@ -115,20 +153,144 @@
       debug:
         var: juju_machines_ordered
 
-    - name: Debug hostname_to_system_id_map
-      debug:
-        var: hostname_to_system_id_map
 
-    - name: Generate bundle.yaml from template
+    - name: Write hostname to system_id map to file
+      copy:
+        content: "{{ hostname_to_system_id_map | to_nice_json }}"
+        dest: "maas_machine_map.json"
+      delegate_to: localhost
+
+
+
+
+    - name: Set applications and machines facts for bundle rendering
+      set_fact:
+        applications:
+          calico:
+            annotations:
+              gui-x: '475'
+              gui-y: '605'
+            channel: 1.31/stable
+            charm: calico
+            options:
+              vxlan: Always
+          containerd:
+            annotations:
+              gui-x: '475'
+              gui-y: '800'
+            channel: 1.31/stable
+            charm: containerd
+          easyrsa:
+            annotations:
+              gui-x: '90'
+              gui-y: '420'
+            channel: 1.31/stable
+            charm: easyrsa
+            constraints: cores=4 mem=4G root-disk=16G
+            num_units: 1
+            to:
+              - 0
+          etcd:
+            annotations:
+              gui-x: '800'
+              gui-y: '420'
+            channel: 1.31/stable
+            charm: etcd
+            constraints: cores=4 mem=8G root-disk=20G
+            num_units: 3
+            options:
+              channel: 3.4/stable
+            to:
+              - "{{ etcd_1_idx }}"
+              - "{{ etcd_2_idx }}"
+              - "{{ etcd_3_idx }}"
+          kubeapi-load-balancer:
+            annotations:
+              gui-x: '450'
+              gui-y: '250'
+            channel: 1.31/stable
+            charm: kubeapi-load-balancer
+            constraints: cores=8 mem=8G root-disk=15G
+            expose: true
+            num_units: 1
+            to:
+              - "{{ lb_1_idx }}"
+          kubernetes-control-plane:
+            annotations:
+              gui-x: '800'
+              gui-y: '850'
+            channel: 1.31/stable
+            charm: kubernetes-control-plane
+            constraints: cores=4 mem=8G root-disk=16G
+            num_units: 4
+            options:
+              channel: 1.31/stable
+            to:
+              - "{{ cp_1_idx }}"
+              - "{{ cp_2_idx }}"
+              - "{{ cp_3_idx }}"
+              - "{{ cp_4_idx }}"
+          kubernetes-worker:
+            annotations:
+              gui-x: '90'
+              gui-y: '850'
+            channel: 1.31/stable
+            charm: kubernetes-worker
+            constraints: cores=16 mem=32G root-disk=64G
+            expose: true
+            num_units: 4
+            options:
+              channel: 1.31/stable
+            to:
+              - "{{ worker_1_idx }}"
+              - "{{ worker_2_idx }}"
+              - "{{ worker_3_idx }}"
+              - "{{ worker_4_idx }}"
+          mysql-innodb-cluster:
+            annotations:
+              gui-x: '650'
+              gui-y: '420'
+            charm: mysql-innodb-cluster
+            constraints: cores=4 mem=8G root-disk=64G
+            num_units: 3
+            options:
+              enable-binlogs: true
+              innodb-buffer-pool-size: 256M
+              max-connections: 2000
+              wait-timeout: 3600
+            to:
+              - "{{ mysql_1_idx }}"
+              - "{{ mysql_2_idx }}"
+              - "{{ mysql_3_idx }}"
+          vault:
+            annotations:
+              gui-x: '650'
+              gui-y: '200'
+            channel: 1.7/stable
+            charm: vault
+            constraints: cores=6 mem=16G root-disk=32G
+            num_units: 1
+            options:
+              auto-generate-root-ca-cert: true
+            to:
+              - "{{ vault_1_idx }}"
+        machines: {}
+
+    - name: Generate bundle.yaml from template (with correct machine IDs)
       template:
         src: bundle.yaml.j2
         dest: bundle.yaml
       vars:
+        applications: "{{ applications }}"
+        machines: "{{ machines }}"
         juju_machines_ordered: "{{ juju_machines_ordered }}"
+        hostname_to_system_id_map: "{{ hostname_to_system_id_map }}"
 
-    - name: Generate vault-pki-overlay.yaml from template
+
+    - name: Generate vault-pki-overlay.yaml from template (with correct machine IDs)
       template:
         src: vault-pki-overlay.yaml.j2
         dest: vault-pki-overlay.yaml
       vars:
         vault_machine_ids: "{{ vault_machine_ids }}"
+        hostname_to_system_id_map: "{{ hostname_to_system_id_map }}"
